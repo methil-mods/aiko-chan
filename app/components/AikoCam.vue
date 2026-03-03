@@ -18,7 +18,7 @@
     >
       <div class="flex items-center gap-2">
         <div class="font-emoji">v</div>
-        <span class="text-base lowercase tracking-tighter">aiko cam live</span>
+        <span class="text-base lowercase tracking-tighter">aiko chat</span>
       </div>
       <div class="flex gap-2 pointer-events-auto">
         <button class="w-6 h-6 bg-[var(--palette-1)] border-2 border-[var(--palette-8)] flex items-center justify-center hover:bg-[var(--palette-2)] transition-colors group">

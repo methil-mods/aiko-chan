@@ -14,7 +14,7 @@
         <div class="flex items-center gap-1 h-full py-1.5">
           <div class="px-4 h-full bg-[var(--palette-1)] text-[var(--palette-8)] flex items-center gap-2 border-[2px] border-[var(--palette-7)]">
             <div class="w-2 h-2 bg-[var(--palette-3)] animate-pulse"></div>
-            <span class="text-[11px] font-bold lowercase">aiko_cam_live</span>
+            <span class="text-[11px] font-bold lowercase">aiko chat</span>
           </div>
         </div>
       </div>
