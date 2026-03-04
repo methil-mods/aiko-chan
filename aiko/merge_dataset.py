@@ -5,12 +5,12 @@ import json
 import argparse
 
 def parse_aiko_xml(file_path):
-    """Parses the Aiko XML format into a list of conversation dictionaries."""
+    """Parses the Aiko XML format into a single multi-turn conversation entry."""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
             
-            # Extract all pairs if there are multiple user/assistant blocks in one file
+            # Extract all tags
             system_matches = re.finditer(r'<system>(.*?)</system>', content, re.DOTALL)
             user_matches = re.finditer(r'<user>(.*?)</user>', content, re.DOTALL)
             think_matches = re.finditer(r'<think>(.*?)</think>', content, re.DOTALL)
@@ -23,29 +23,24 @@ def parse_aiko_xml(file_path):
             emotions = [m.group(1).strip() for m in emotion_matches]
             assistants = [m.group(1).strip() for m in assistant_matches]
             
-            results = []
-            # We zip based on the longest list but usually they should match
+            messages = []
+            
+            # 1. Add System Prompt (First one found or default)
+            if systems:
+                messages.append({"role": "system", "content": systems[0]})
+            
+            # 2. Interleave User and Assistant messages
             count = max(len(users), len(assistants))
-            
-            # Use a default fallback or the first system prompt found in the file
-            default_system = systems[0] if systems else ""
-            
             for i in range(count):
-                s = systems[i] if i < len(systems) else default_system
                 u = users[i] if i < len(users) else ""
                 t = thinks[i] if i < len(thinks) else ""
                 e = emotions[i] if i < len(emotions) else ""
                 a = assistants[i] if i < len(assistants) else ""
                 
-                # Construct messages list (Standard for Qwen/Messages/OpenAI/ShareGPT formats)
-                messages = []
-                if s:
-                    messages.append({"role": "system", "content": s})
-                
                 if u:
                     messages.append({"role": "user", "content": u})
                 
-                # We pack think and emotion tags inside the assistant content
+                # Construct assistant content with internal tags
                 assistant_parts = []
                 if t: assistant_parts.append(f"<think>{t}</think>")
                 if e: assistant_parts.append(f"<emotion>{e}</emotion>")
@@ -54,10 +49,10 @@ def parse_aiko_xml(file_path):
                 assistant_content = "\n".join(assistant_parts)
                 if assistant_content:
                     messages.append({"role": "assistant", "content": assistant_content})
-                
-                results.append({"messages": messages})
             
-            return results
+            if messages:
+                return [{"messages": messages}]
+            return []
     except Exception as e:
         print(f"Error parsing {file_path}: {e}")
         return []
@@ -82,8 +77,8 @@ def merge_dataset(input_dir, output_file):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Merge Aiko XML dataset into a single JSONL file.")
-    parser.add_argument("--input", default="./dataset/aiko_fr_nothink", help="Directory containing XML files")
-    parser.add_argument("--output", default="aiko_dataset_fr_nothink.jsonl", help="Output JSONL filename")
+    parser.add_argument("--input", default="./dataset/aiko_fr", help="Directory containing XML files")
+    parser.add_argument("--output", default="aiko_dataset_fr.jsonl", help="Output JSONL filename")
     
     args = parser.parse_args()
     
