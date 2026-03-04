@@ -37,8 +37,15 @@ def parse_aiko_xml(file_path):
                 e = emotions[i] if i < len(emotions) else ""
                 a = assistants[i] if i < len(assistants) else ""
                 
-                # For training, we construct the full block
-                full_prompt = f"<system>{s}</system>\n<user>{u}</user>\n<think>{t}</think>\n<emotion>{e}</emotion>\n<assistant>{a}</assistant>"
+                # Construct the text field, omitting categories that are empty
+                text_parts = []
+                if s: text_parts.append(f"<system>{s}</system>")
+                if u: text_parts.append(f"<user>{u}</user>")
+                if t: text_parts.append(f"<think>{t}</think>")
+                if e: text_parts.append(f"<emotion>{e}</emotion>")
+                if a: text_parts.append(f"<assistant>{a}</assistant>")
+                
+                full_prompt = "\n".join(text_parts)
                 results.append({"text": full_prompt})
             
             return results
@@ -66,8 +73,8 @@ def merge_dataset(input_dir, output_file):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Merge Aiko XML dataset into a single JSONL file.")
-    parser.add_argument("--input", default="./dataset/aiko_fr", help="Directory containing XML files")
-    parser.add_argument("--output", default="aiko_dataset.jsonl", help="Output JSONL filename")
+    parser.add_argument("--input", default="./dataset/aiko_fr_instruct", help="Directory containing XML files")
+    parser.add_argument("--output", default="aiko_dataset_fr_instruct.jsonl", help="Output JSONL filename")
     
     args = parser.parse_args()
     
