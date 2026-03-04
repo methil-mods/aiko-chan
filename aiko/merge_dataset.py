@@ -37,16 +37,25 @@ def parse_aiko_xml(file_path):
                 e = emotions[i] if i < len(emotions) else ""
                 a = assistants[i] if i < len(assistants) else ""
                 
-                # Construct the text field, omitting categories that are empty
-                text_parts = []
-                if s: text_parts.append(f"<system>{s}</system>")
-                if u: text_parts.append(f"<user>{u}</user>")
-                if t: text_parts.append(f"<think>{t}</think>")
-                if e: text_parts.append(f"<emotion>{e}</emotion>")
-                if a: text_parts.append(f"<assistant>{a}</assistant>")
+                # Construct messages list (Standard for Qwen/Messages/OpenAI/ShareGPT formats)
+                messages = []
+                if s:
+                    messages.append({"role": "system", "content": s})
                 
-                full_prompt = "\n".join(text_parts)
-                results.append({"text": full_prompt})
+                if u:
+                    messages.append({"role": "user", "content": u})
+                
+                # We pack think and emotion tags inside the assistant content
+                assistant_parts = []
+                if t: assistant_parts.append(f"<think>{t}</think>")
+                if e: assistant_parts.append(f"<emotion>{e}</emotion>")
+                if a: assistant_parts.append(a)
+                
+                assistant_content = "\n".join(assistant_parts)
+                if assistant_content:
+                    messages.append({"role": "assistant", "content": assistant_content})
+                
+                results.append({"messages": messages})
             
             return results
     except Exception as e:
@@ -73,8 +82,8 @@ def merge_dataset(input_dir, output_file):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Merge Aiko XML dataset into a single JSONL file.")
-    parser.add_argument("--input", default="./dataset/aiko_fr_instruct", help="Directory containing XML files")
-    parser.add_argument("--output", default="aiko_dataset_fr_instruct.jsonl", help="Output JSONL filename")
+    parser.add_argument("--input", default="./dataset/aiko_fr_nothink", help="Directory containing XML files")
+    parser.add_argument("--output", default="aiko_dataset_fr_nothink.jsonl", help="Output JSONL filename")
     
     args = parser.parse_args()
     
