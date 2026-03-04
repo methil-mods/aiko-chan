@@ -17,7 +17,7 @@ public sealed class LlamaWarmupHostedService : IHostedService
 
         // Petite requête pour valider la chaîne complète.
         // Si le modèle/arch est incompatible, ça aura déjà crashé au ctor du service.
-        var _ = await _llama.GenerateAsync("ping", cancellationToken);
+        var _ = await _llama.GenerateFinalLineAsync("a", "ping", cancellationToken);
 
         _logger.LogInformation("LLM warmup done.");
     }
