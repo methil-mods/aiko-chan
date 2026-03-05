@@ -20,7 +20,8 @@ public sealed class LlamaService : ILlamaService
         "<|im_start|>user",
         "<|im_start|>system",
         "\nUser:",
-        "\nAssistant:"
+        "\nAssistant:",
+        "<think>"
     };
 
     public LlamaService(
@@ -72,7 +73,8 @@ public sealed class LlamaService : ILlamaService
     public async IAsyncEnumerable<(string Token, string Response, UsageMetrics Usage, bool Done)> StreamFinalAsync(
         string promptId,
         string userMessage,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+        [System.Runtime.CompilerServices.EnumeratorCancellation]
+        CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(promptId))
             throw new ArgumentException("promptId is required", nameof(promptId));
@@ -85,30 +87,108 @@ public sealed class LlamaService : ILlamaService
 
         var session = GetOrCreateSession(promptId);
 
+        var inThink = false;
+        var responseClean = new StringBuilder();
+
+        // anti-spam "Answer:"
+        var seenAnswerLabel = false;
+        var forceDone = false;
+
         await foreach (var item in session.StreamAsync(
-                           prompt: BuildFinalOnlyPrompt(userMessage),
+                           prompt: BuildStreamAnswerPrompt(userMessage),
                            maxTokens: _opt.MaxTokens,
                            ct: ct))
         {
-            // We stream the raw model output, but keep it clean of obvious artifacts.
-            // Client assembles `response` by concatenating tokens.
-            var token = item.Token;
-            var response = item.Response;
+            var rawToken = item.Token ?? string.Empty;
             var usage = item.Usage;
             var done = item.Done;
 
-            // Light sanitization on the fly (avoid leaking control tokens)
-            if (!string.IsNullOrEmpty(token))
+            // remove obvious control tokens
+            rawToken = rawToken.Replace("<|im_end|>", "", StringComparison.Ordinal)
+                .Replace("<|im_start|>", "", StringComparison.Ordinal)
+                .Replace("</think>", "", StringComparison.OrdinalIgnoreCase);
+
+            // Filter out <think>...</think>
+            var visibleToken = FilterThinkToken(rawToken, ref inThink);
+
+            // Strip "Answer:" + stop if it starts looping
+            visibleToken = FilterAnswerLabels(
+                visibleToken,
+                ref seenAnswerLabel,
+                alreadyProducedLen: responseClean.Length,
+                out var stopBecauseAnswerLoop);
+
+            if (stopBecauseAnswerLoop)
+                forceDone = true;
+
+            // ✅ STOP AU PREMIER RETOUR LIGNE (on veut UNE seule ligne)
+            var nlInToken = visibleToken.IndexOf('\n');
+            if (nlInToken >= 0)
             {
-                if (token.Contains("<|im_end|>") || token.Contains("<|im_start|>"))
-                    token = token.Replace("<|im_end|>", "").Replace("<|im_start|>", "");
+                visibleToken = visibleToken[..nlInToken];
+                forceDone = true;
             }
 
-            yield return (token, response, usage, done);
+            if (!string.IsNullOrEmpty(visibleToken))
+                responseClean.Append(visibleToken);
 
-            if (done) yield break;
+            var responseSoFar = responseClean.ToString();
+
+            // Si jamais une newline s'est glissée via un token précédent, on coupe
+            var nlInResponse = responseSoFar.IndexOf('\n');
+            if (nlInResponse >= 0)
+            {
+                responseSoFar = responseSoFar[..nlInResponse];
+                responseClean.Clear();
+                responseClean.Append(responseSoFar);
+                forceDone = true;
+            }
+
+            // ✅ Le stream ne doit pas leak "FINAL:"
+            if (responseSoFar.StartsWith("FINAL:", StringComparison.OrdinalIgnoreCase))
+            {
+                responseSoFar = responseSoFar["FINAL:".Length..].TrimStart();
+            }
+
+            // ✅ Si le modèle recommence un second "FINAL:" => boucle => stop
+            // (ça arrive quand il “relance” une nouvelle réponse)
+            if (responseSoFar.Contains("FINAL:", StringComparison.OrdinalIgnoreCase))
+            {
+                // garde uniquement la partie après le premier FINAL:
+                var firstFinal = responseSoFar.IndexOf("FINAL:", StringComparison.OrdinalIgnoreCase);
+                if (firstFinal >= 0)
+                    responseSoFar = responseSoFar[(firstFinal + "FINAL:".Length)..].TrimStart();
+            }
+
+            var isDone = forceDone || done;
+
+            yield return (visibleToken, responseSoFar, usage, isDone);
+
+            if (isDone)
+                yield break;
         }
     }
+
+    private string BuildStreamAnswerPrompt(string userMessage)
+    {
+        return
+            $@"<|im_start|>system
+{_opt.SystemPrompt}
+
+You must output exactly ONE line.
+It must start with: FINAL:
+No other text. No lists. No explanations.
+Do NOT output <think>.
+Do NOT include role labels like 'User:' or 'Assistant:'.
+Do NOT use emojis.
+<|im_end|>
+<|im_start|>user
+{userMessage}
+<|im_end|>
+<|im_start|>assistant
+FINAL:";
+    }
+
 
     public async Task<(string reasoning, string answer, UsageMetrics totalUsage)> GenerateWithReasoningAsync(
         string promptId,
@@ -162,7 +242,14 @@ public sealed class LlamaService : ILlamaService
             {
                 if (value is PromptSession s)
                 {
-                    try { s.Dispose(); } catch { /* ignore */ }
+                    try
+                    {
+                        s.Dispose();
+                    }
+                    catch
+                    {
+                        /* ignore */
+                    }
                 }
             });
 
@@ -243,7 +330,8 @@ public sealed class LlamaService : ILlamaService
 
                 sw.Stop();
                 var final = sb.ToString().Trim();
-                return new CompletionResult(final, UsageMetrics.From(inputTokens, outputTokens, sw.ElapsedMilliseconds));
+                return new CompletionResult(final,
+                    UsageMetrics.From(inputTokens, outputTokens, sw.ElapsedMilliseconds));
             }
             finally
             {
@@ -256,7 +344,8 @@ public sealed class LlamaService : ILlamaService
         public async IAsyncEnumerable<StreamChunk> StreamAsync(
             string prompt,
             int maxTokens,
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
+            [System.Runtime.CompilerServices.EnumeratorCancellation]
+            CancellationToken ct)
         {
             await _gate.WaitAsync(ct);
             try
@@ -363,6 +452,7 @@ public sealed class LlamaService : ILlamaService
             if (idx >= 0 && (best < 0 || idx < best))
                 best = idx;
         }
+
         return best;
     }
 
@@ -371,7 +461,7 @@ public sealed class LlamaService : ILlamaService
     private string BuildFinalOnlyPrompt(string userMessage)
     {
         return
-$@"<|im_start|>system
+            $@"<|im_start|>system
 {_opt.SystemPrompt}
 Return only one line in this exact format:
 FINAL: <your answer>
@@ -386,7 +476,7 @@ FINAL: <your answer>
     private string BuildReasoningOnlyPrompt(string userMessage)
     {
         return
-$@"<|im_start|>system
+            $@"<|im_start|>system
 Write internal reasoning only.
 Return ONLY this format:
 
@@ -412,7 +502,7 @@ No extra text.
     private string BuildFinalWithHiddenReasoningPrompt(string userMessage, string reasoning)
     {
         return
-$@"<|im_start|>system
+            $@"<|im_start|>system
 {_opt.SystemPrompt}
 You must output exactly ONE line.
 It must start with: FINAL:
@@ -442,8 +532,8 @@ FINAL:";
 
         text = StripThinkBlocks(text);
         text = text.Replace("<|im_end|>", "", StringComparison.Ordinal)
-                   .Replace("<|im_start|>", "", StringComparison.Ordinal)
-                   .Replace("</think>", "", StringComparison.OrdinalIgnoreCase);
+            .Replace("<|im_start|>", "", StringComparison.Ordinal)
+            .Replace("</think>", "", StringComparison.OrdinalIgnoreCase);
 
         return text.Trim();
     }
@@ -529,5 +619,86 @@ FINAL:";
         var first = idx >= 0 ? text[..idx] : text;
         if (first.Length > 600) first = first[..600];
         return first.Trim();
+    }
+
+    private static string FilterThinkToken(string token, ref bool inThink)
+    {
+        if (string.IsNullOrEmpty(token))
+            return string.Empty;
+
+        var output = new StringBuilder();
+        var i = 0;
+
+        while (i < token.Length)
+        {
+            if (!inThink)
+            {
+                var start = token.IndexOf("<think>", i, StringComparison.OrdinalIgnoreCase);
+                if (start < 0)
+                {
+                    // no think start -> all remaining is visible
+                    output.Append(token.AsSpan(i));
+                    break;
+                }
+
+                // append visible part before <think>
+                if (start > i)
+                    output.Append(token.AsSpan(i, start - i));
+
+                // enter think mode
+                inThink = true;
+                i = start + "<think>".Length;
+                continue;
+            }
+            else
+            {
+                var end = token.IndexOf("</think>", i, StringComparison.OrdinalIgnoreCase);
+                if (end < 0)
+                {
+                    // still inside think; drop rest of this token
+                    break;
+                }
+
+                // exit think mode
+                inThink = false;
+                i = end + "</think>".Length;
+                continue;
+            }
+        }
+
+        return output.ToString();
+    }
+    
+    private static string FilterAnswerLabels(string token, ref bool seenAnswerLabel, int alreadyProducedLen, out bool forceDone)
+    {
+        forceDone = false;
+
+        if (string.IsNullOrEmpty(token))
+            return string.Empty;
+
+        // Certains modèles sortent "Answer:" (et le répètent plusieurs fois).
+        // On le supprime. Si on le revoit après avoir déjà produit du texte -> on stop le stream.
+        var idx = token.IndexOf("Answer:", StringComparison.OrdinalIgnoreCase);
+        if (idx < 0)
+            return token;
+
+        // Si on a déjà du contenu ET qu'on a déjà vu un Answer: auparavant => répétition => stop
+        if (alreadyProducedLen > 0 && seenAnswerLabel)
+        {
+            forceDone = true;
+            return token[..idx];
+        }
+
+        // Première occurrence: on strip le label et on continue
+        seenAnswerLabel = true;
+
+        var before = token[..idx];
+        var after = token[(idx + "Answer:".Length)..];
+
+        // retire un espace éventuel après "Answer:"
+        if (after.Length > 0 && after[0] == ' ')
+            after = after[1..];
+
+        return before + after;
     }
 }
