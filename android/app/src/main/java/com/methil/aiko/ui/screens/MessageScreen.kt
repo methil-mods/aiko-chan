@@ -21,9 +21,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import coil.compose.AsyncImage
 import com.methil.aiko.R
 import com.methil.aiko.ui.components.AikoCustomKeyboard
@@ -43,8 +44,9 @@ fun MessageScreen(
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
-    // Auto-scroll to bottom when messages change
-    LaunchedEffect(messages.size) {
+    // Auto-scroll to bottom when messages change or current message is streaming
+    val lastMessageText = messages.lastOrNull()?.text ?: ""
+    LaunchedEffect(messages.size, lastMessageText) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
         }
@@ -122,7 +124,17 @@ fun MessageScreen(
             )
 
             // Custom Keyboard
-            if (uiState.isKeyboardOpen) {
+            AnimatedVisibility(
+                visible = uiState.isKeyboardOpen,
+                enter = slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(durationMillis = 300)
+                ),
+                exit = slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            ) {
                 AikoCustomKeyboard(
                     onKeyClick = { viewModel.onInputTextChanged(uiState.inputText + it) },
                     onDelete = { 
