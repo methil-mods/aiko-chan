@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test SSE /chat/stream</title>
+    <style>
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 16px; }
+        .row { display: flex; gap: 8px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+        input, textarea { font: inherit; padding: 8px; }
+        input { width: 280px; }
+        textarea { width: 100%; height: 110px; }
+        button { padding: 8px 12px; font: inherit; cursor: pointer; }
+        pre { white-space: pre-wrap; border: 1px solid #ddd; padding: 12px; border-radius: 6px; min-height: 140px; }
+        .pill { display: inline-block; padding: 4px 10px; border: 1px solid #ddd; border-radius: 999px; }
+        code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+<h1>Test SSE <code>/chat/stream</code></h1>
+
+<div class="row">
+    <span class="pill">page: <b id="page"></b></span>
+    <span class="pill">backend: <b id="backendShown"></b></span>
+</div>
+
+<div class="row">
+    <label>backend</label>
+    <input id="baseUrl" value="http://localhost:5013" />
+
+    <label>promptId</label>
+    <input id="promptId" value="test" />
+
+    <label>model</label>
+    <input id="model" placeholder="(optionnel) ex: qwen3_5-2b" />
+
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+</div>
+
+<textarea id="message">Explique les sockets TCP en simple.</textarea>
+
+<div class="row">
+    <span class="pill">tps: <b id="tps">0</b></span>
+    <span class="pill">in: <b id="inTok">0</b></span>
+    <span class="pill">out: <b id="outTok">0</b></span>
+    <span class="pill">consumed: <b id="consumed">0</b></span>
+    <span class="pill">ms: <b id="ms">0</b></span>
+</div>
+
+<pre id="out"></pre>
+
+<script>
+    let es = null;
+    const $ = (id) => document.getElementById(id);
+
+    function closeStream() {
+        if (es) es.close();
+        es = null;
+    }
+
+    function normalizeBaseUrl(s) {
+        return (s || "").trim().replace(/\/+$/, "");
+    }
+
+    $("start").addEventListener("click", () => {
+        closeStream();
+
+        const baseUrl = normalizeBaseUrl($("baseUrl").value);
+        const promptId = $("promptId").value.trim();
+        const model = $("model").value.trim();
+        const message = $("message").value ?? "";
+
+        if (!baseUrl) { alert("baseUrl requis (ex: http://localhost:5013)"); return; }
+        if (!promptId) { alert("promptId requis"); return; }
+        if (!message.trim()) { alert("message requis"); return; }
+
+        $("out").textContent = "";
+        $("tps").textContent = "0";
+        $("inTok").textContent = "0";
+        $("outTok").textContent = "0";
+        $("consumed").textContent = "0";
+        $("ms").textContent = "0";
+
+        $("backendShown").textContent = baseUrl;
+
+        const u = new URL(baseUrl + "/chat/stream");
+        u.searchParams.set("promptId", promptId);
+        u.searchParams.set("message", message);
+
+        if (model)
+            u.searchParams.set("model", model);
+
+        console.log("SSE URL:", u.toString());
+        es = new EventSource(u.toString());
+
+        es.addEventListener("token", (ev) => {
+            const data = JSON.parse(ev.data);
+
+            if (data.token) $("out").textContent += data.token;
+
+            $("tps").textContent = Number(data.tokensPerSecond ?? 0).toFixed(2);
+            $("inTok").textContent = data.inputTokens ?? 0;
+            $("outTok").textContent = data.outputTokens ?? 0;
+            $("consumed").textContent = data.tokensConsumed ?? 0;
+            $("ms").textContent = data.elapsedMs ?? 0;
+
+            if (data.done) closeStream();
+        });
+
+        es.onerror = (e) => {
+            console.error("SSE error", e);
+            closeStream();
+        };
+    });
+
+    $("stop").addEventListener("click", closeStream);
+
+    $("page").textContent = window.location.href;
+    $("backendShown").textContent = normalizeBaseUrl($("baseUrl").value);
+</script>
+</body>
+</html>

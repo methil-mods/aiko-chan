@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Aiko"
 include(":app")
- 
+include(":data")
