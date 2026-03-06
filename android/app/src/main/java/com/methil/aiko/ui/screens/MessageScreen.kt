@@ -36,14 +36,18 @@ data class Message(val text: String, val isAiko: Boolean)
 @Preview
 @Composable
 fun MessageScreen() {
-    var messages by remember { mutableStateOf(listOf(
-        Message("Hello there! I'm Aiko.", true),
-        Message("How are you feeling today?", true)
-    )) }
-    
+    var messages by remember {
+        mutableStateOf(
+            listOf(
+                Message("Hello there! I'm Aiko.", true),
+                Message("How are you feeling today?", true)
+            )
+        )
+    }
+
     var inputText by remember { mutableStateOf("") }
     var isKeyboardOpen by remember { mutableStateOf(false) }
-    
+
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
@@ -53,9 +57,9 @@ fun MessageScreen() {
             .background(LightViolet)
     ) {
         // Chat Background
-        AsyncImage(
-            model = "http://localhost:3845/assets/9cf805d5a475c54a37b53c3a60a464a10f334e3e.png", // chat-bg.png
-            contentDescription = null,
+        Image(
+            painter = painterResource(id = R.drawable.chat_bg),
+            contentDescription = "background",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
         )
@@ -70,23 +74,29 @@ fun MessageScreen() {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Left Window: Mood/Profile
-                XpWindow(title = "Mood", modifier = Modifier.weight(1f)) {
-                    AsyncImage(
-                        model = "http://localhost:3845/assets/cdc6774281aa12d377d809fad68a2d24ef627297.png", // e-girl-emo.png
+                XpWindow(title = "感情", modifier = Modifier.weight(1f)) {
+                    Image(
+                        painter = painterResource(id = R.drawable.e_girl_emo),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.FillWidth
                     )
                 }
-                
+
                 // Right Window: Stats
-                XpWindow(title = "Stats", modifier = Modifier.weight(1.5f)) {
+                XpWindow(title = "身体の状態", modifier = Modifier.weight(1.5f)) {
                     Column(
                         modifier = Modifier.padding(8.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        StatRow("LUV", "http://localhost:3845/assets/ae3b83a6522aeef54dbf03912059a8181a1e451919.svg") // heart_fill
-                        StatRow("NRG", "http://localhost:3845/assets/7c85398c646e1d8c43dece198ea8c2f864130d4f.svg") // spark_fill
+                        StatRow(
+                            "LUV",
+                            "http://localhost:3845/assets/ae3b83a6522aeef54dbf03912059a8181a1e451919.svg"
+                        ) // heart_fill
+                        StatRow(
+                            "NRG",
+                            "http://localhost:3845/assets/7c85398c646e1d8c43dece198ea8c2f864130d4f.svg"
+                        ) // spark_fill
                     }
                 }
             }
@@ -153,46 +163,45 @@ fun ChatBubble(message: Message) {
     val shadowColor = DarkPurple
     val shadowOffset = 2.dp
 
-    // Use Row for horizontal positioning
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         horizontalArrangement = if (message.isAiko) Arrangement.Start else Arrangement.End,
         verticalAlignment = Alignment.Bottom
     ) {
-        // Container with fixed size for proper absolute positioning
         Box(
             modifier = Modifier.width(260.dp)
         ) {
-            // Hard shadow - absolute positioned behind content
+            // Shadow - Using matchParentSize to automatically adapt to bubble content
             Box(
                 modifier = Modifier
-                    .size(260.dp, 60.dp)
+                    .matchParentSize()
                     .offset(x = shadowOffset, y = shadowOffset)
                     .background(shadowColor)
-                    .clip(RoundedCornerShape(12.dp))
             )
 
-            // Bubble content with padding for shadow space
+            // Bubble content
             Surface(
                 modifier = Modifier
-                    .size(260.dp, 60.dp)
+                    .fillMaxWidth()
                     .padding(
                         start = if (message.isAiko) 0.dp else shadowOffset,
                         end = if (message.isAiko) shadowOffset else 0.dp,
                         bottom = shadowOffset
                     ),
-                color = if (message.isAiko) LightestPink else Color.White,
-                border = BorderStroke(2.dp, LightViolet),
+                color = LightestPink,
+                border = BorderStroke(2.dp, LightViolet)
             ) {
                 Row(
                     modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.e_girl_pp),
-                        contentDescription = null,
+                        contentDescription = "Profile Picture",
                         modifier = Modifier
-                            .height(45.dp)
-                            .aspectRatio(1F),
+                            .size(45.dp),
                         contentScale = ContentScale.Crop
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -203,6 +212,23 @@ fun ChatBubble(message: Message) {
                     )
                 }
             }
+
+            // Tail/Arrow - Positioned at bottom corner based on sender
+            val tailResId =
+                if (message.isAiko) R.drawable.msg_arrow_left else R.drawable.msg_arrow_right
+            Image(
+                painter = painterResource(id = tailResId),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(
+                        if (message.isAiko) Alignment.BottomStart else Alignment.BottomEnd
+                    )
+                    .size(20.dp)
+                    .offset(
+                        x = if (message.isAiko) 0.dp else (4).dp,
+                        y = 16.dp
+                    )
+            )
         }
     }
 }
@@ -249,15 +275,16 @@ fun Y2kInputArea(
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Text(
-                        text = if (text.isEmpty()) "Discuter..." else text,
+                        text = if (text.isEmpty()) "Aikoと話す" else text,
                         color = if (text.isEmpty()) Color.Gray else DarkPurple,
                         fontSize = 16.sp
                     )
                 }
                 IconButton(onClick = onSend) {
-                    AsyncImage(
-                        model = "http://localhost:3845/assets/a979123e7798b8e8dff7fde7f48ee58a2f3db2f9.svg",
+                    Icon(
+                        painter = painterResource(id = R.drawable.send_ico),
                         contentDescription = "Send",
+                        tint = DarkPurple,
                         modifier = Modifier.size(24.dp)
                     )
                 }

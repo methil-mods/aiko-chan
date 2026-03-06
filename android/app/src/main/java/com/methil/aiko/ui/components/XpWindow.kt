@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.methil.aiko.ui.theme.DarkPurple
 import com.methil.aiko.ui.theme.LightViolet
+import com.methil.aiko.ui.theme.LightestPink
 
 @Composable
 fun XpWindow(
@@ -36,7 +37,7 @@ fun XpWindow(
 
         Surface(
             modifier = Modifier
-                .background(Color.White)
+                .background(LightestPink)
                 .border(BorderStroke(3.dp, LightViolet)),
             color = Color.White
         ) {
