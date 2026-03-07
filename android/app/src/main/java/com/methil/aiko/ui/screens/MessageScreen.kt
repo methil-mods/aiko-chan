@@ -16,15 +16,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import coil.compose.AsyncImage
 import com.methil.aiko.R
 import com.methil.aiko.ui.components.AikoCustomKeyboard
@@ -48,6 +52,15 @@ fun MessageScreen(
     val lastMessageText = messages.lastOrNull()?.text ?: ""
     LaunchedEffect(messages.size, lastMessageText) {
         if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
+
+    // Auto-scroll when keyboard opens
+    LaunchedEffect(uiState.isKeyboardOpen) {
+        if (uiState.isKeyboardOpen && messages.isNotEmpty()) {
+            // Give a small delay to allow the layout to adjust
+            kotlinx.coroutines.delay(300)
             listState.animateScrollToItem(messages.size - 1)
         }
     }
@@ -108,7 +121,18 @@ fun MessageScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                    .drawWithContent {
+                        drawContent()
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                0f to Color.Transparent,
+                                0.1f to Color.Black
+                            ),
+                            blendMode = BlendMode.DstIn
+                        )
+                    },
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
@@ -120,6 +144,7 @@ fun MessageScreen(
             // Input Area
             Y2kInputArea(
                 text = uiState.inputText,
+                isKeyboardOpen = uiState.isKeyboardOpen,
                 onInputClick = { viewModel.toggleKeyboard() },
                 onSend = { viewModel.sendMessage() }
             )
@@ -181,6 +206,23 @@ fun StatRow(label: String, iconUrl: String) {
 
 @Composable
 fun ChatBubble(message: MessageUI) {
+    if (message.isSystem) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = message.text,
+                color = LightestPink,
+                fontSize = 14.sp,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+            )
+        }
+        return
+    }
+
     val shadowColor = DarkPurple
     val shadowOffset = 2.dp
 
@@ -257,11 +299,28 @@ fun ChatBubble(message: MessageUI) {
 @Composable
 fun Y2kInputArea(
     text: String,
+    isKeyboardOpen: Boolean,
     onInputClick: () -> Unit,
     onSend: () -> Unit
 ) {
     val shadowColor = DarkPurple
     val shadowOffset = 4.dp
+
+    val infiniteTransition = rememberInfiniteTransition(label = "CursorTransition")
+    val cursorAlpha by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 1000
+                0.7f at 500
+                1f at 501
+                1f at 1000
+            },
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "CursorAlpha"
+    )
 
     Box(
         modifier = Modifier
@@ -295,11 +354,22 @@ fun Y2kInputArea(
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    Text(
-                        text = if (text.isEmpty()) "Aikoと話す" else text,
-                        color = if (text.isEmpty()) Color.Gray else DarkPurple,
-                        fontSize = 16.sp
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = if (text.isEmpty() && !isKeyboardOpen) "Aikoと話す" else text,
+                            color = if (text.isEmpty() && !isKeyboardOpen) Color.Gray else DarkPurple,
+                            fontSize = 16.sp
+                        )
+                        if (isKeyboardOpen) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(start = 2.dp)
+                                    .size(width = 2.dp, height = 20.dp)
+                                    .graphicsLayer { alpha = cursorAlpha }
+                                    .background(DarkPurple)
+                            )
+                        }
+                    }
                 }
                 IconButton(onClick = onSend) {
                     Icon(

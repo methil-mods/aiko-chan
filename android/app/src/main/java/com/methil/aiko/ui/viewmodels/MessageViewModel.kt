@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 data class MessageUI(
     val text: String,
     val isAiko: Boolean,
+    val isSystem: Boolean = false,
     val isStreaming: Boolean = false,
     val isSearching: Boolean = false
 )
@@ -43,8 +44,7 @@ class MessageViewModel : ViewModel() {
         }
         if (savedMessages.isEmpty()) {
             _uiState.update { it.copy(messages = listOf(
-                MessageUI("Hello there! I'm Aiko.", true),
-                MessageUI("How are you feeling today?", true)
+                MessageUI("Ici est votre conversation avec aiko", isAiko = false, isSystem = true)
             )) }
         } else {
             _uiState.update { it.copy(messages = savedMessages) }

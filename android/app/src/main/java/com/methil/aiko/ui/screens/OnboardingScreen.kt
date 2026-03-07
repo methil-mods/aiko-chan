@@ -50,23 +50,11 @@ fun OnboardingScreen(onStartClick: () -> Unit) {
         label = "DitherAlpha"
     )
     
-    // E-girl bounce from right animation
-    val egirlOffsetX: androidx.compose.ui.unit.Dp by animateDpAsState(
-        targetValue = if (animationStage >= 1) 0.dp else screenWidth,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "EgirlOffsetX"
-    )
-    
-    val egirlScale: Float by animateFloatAsState(
-        targetValue = if (animationStage >= 1) 1f else 0.5f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "EgirlScale"
+    // E-girl fade in animation
+    val egirlAlpha: Float by animateFloatAsState(
+        targetValue = if (animationStage >= 1) 1f else 0f,
+        animationSpec = tween(durationMillis = 800),
+        label = "EgirlAlpha"
     )
     
     // Logo fade in
@@ -98,8 +86,8 @@ fun OnboardingScreen(onStartClick: () -> Unit) {
     LaunchedEffect(Unit) {
         animationStage = 0 // Dither background visible
         delay(300)
-        animationStage = 1 // E-girl bounces in from right
-        delay(400)
+        animationStage = 1 // E-girl fades in
+        delay(800)
         animationStage = 2 // Logo fades in
         delay(300)
         animationStage = 3 // Button slides up
@@ -136,20 +124,16 @@ fun OnboardingScreen(onStartClick: () -> Unit) {
             }
         )
 
-        // E-girl image - full screen ignoring safe area, bouncing from right to center with nearest neighbor filtering
+        // E-girl image - fade in
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .offset(x = egirlOffsetX)
+                .graphicsLayer { alpha = egirlAlpha }
         ) {
             AndroidView(
                 modifier = Modifier
                     .fillMaxSize()
-                    .align(Alignment.Center)
-                    .graphicsLayer {
-                        scaleX = egirlScale
-                        scaleY = egirlScale
-                    },
+                    .align(Alignment.Center),
                 factory = { ctx ->
                     ImageView(ctx).apply {
                         setImageResource(R.drawable.e_girl)
