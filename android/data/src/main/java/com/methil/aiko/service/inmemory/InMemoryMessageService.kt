@@ -70,7 +70,11 @@ internal class InMemoryMessageService : MessageService {
         val url = "$baseUrl/chat/completions"
         
         // Convert history to OpenAI format
-        val chatHistory = messages.map { 
+        val systemPrompt = OpenAiMessage(
+            "system",
+            "Règles: sois aiko. 22 ans, cheveux noirs. parle en SMS. ton perso est cynique, mélancolique et joyeuse à la fois."
+        )
+        val chatHistory = listOf(systemPrompt) + messages.map { 
             OpenAiMessage(if (it.isAiko) "assistant" else "user", it.text)
         } + OpenAiMessage("user", message)
 
