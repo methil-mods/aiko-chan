@@ -4,9 +4,7 @@ import os
 
 app = modal.App("aiko-backend-llama-cpp")
 
-# Define the image with CUDA runtime + pre-built llama-cpp-python wheels
-# Uses runtime (not devel) for smaller image = faster cold start
-# Pre-built CUDA wheels = no compilation needed
+# Pre-built CUDA wheels = no compilation, fast image build
 image = (
     modal.Image.from_registry(
         "nvidia/cuda:12.4.1-devel-ubuntu22.04",
@@ -26,42 +24,36 @@ MINUTES = 60
 
 @app.function(
     image=image,
-    gpu="L40S",
+    gpu="T4",              # T4 = faster to allocate, plenty for 4B Q4
     scaledown_window=3 * MINUTES,
     timeout=1 * MINUTES,
     volumes={"/models": volume},
-    secrets=[modal.Secret.from_name("AIKO")]
+    secrets=[modal.Secret.from_name("AIKO")],
 )
 @modal.web_server(port=8000, startup_timeout=120)
 def serve():
-    # Verify model file exists
     if not os.path.exists(MODEL_PATH):
-        models_dir = os.listdir("/models") if os.path.exists("/models") else "Directory not found"
-        raise FileNotFoundError(f"Model file not found at {MODEL_PATH}. Contents of /models: {models_dir}")
+        models_dir = os.listdir("/models") if os.path.exists("/models") else "N/A"
+        raise FileNotFoundError(f"Model not found at {MODEL_PATH}. /models: {models_dir}")
 
-    # Build command for llama-cpp-python OpenAI-compatible server
     cmd = [
         "python3", "-m", "llama_cpp.server",
         "--model", MODEL_PATH,
         "--host", "0.0.0.0",
         "--port", "8000",
-        "--n_gpu_layers", "-1",  # Offload all layers to GPU
+        "--n_gpu_layers", "-1",
         "--chat_format", "chatml",
+        "--n_ctx", "2048",
     ]
 
-    # Check if an API_KEY environment variable is set
     api_key = os.environ.get("AIKO_API_KEY")
     if api_key:
         cmd.extend(["--api_key", api_key])
 
-    print(f"Starting llama-cpp server with command: {' '.join(cmd)}")
+    print(f"Starting llama-cpp server: {' '.join(cmd)}")
     subprocess.Popen(cmd)
 
 @app.local_entrypoint()
 def main():
-    print("Note: To interact with this server locally, it must be running via `modal serve modal/modal_app.py`")
-    print("Or deployed via `modal deploy modal/modal_app.py`")
-    print("If deployed, check the Modal dashboard for the endpoint URL.")
-
-    print("\nTip: Make sure the model is uploaded to the 'aiko-models' volume.")
-    print("Run: modal volume put aiko-models models/aiko-q4.gguf /aiko-q4.gguf")
+    print("Deploy: modal deploy modal/modal_app.py")
+    print("Upload model: modal volume put aiko-models models/aiko-q4.gguf /aiko-q4.gguf")

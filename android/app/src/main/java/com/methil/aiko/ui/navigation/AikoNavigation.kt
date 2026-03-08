@@ -27,13 +27,24 @@ fun AikoNavigation(modifier: Modifier = Modifier) {
         }
         composable("onboarding") {
             OnboardingScreen(onStartClick = {
-                navController.navigate("message") {
+                navController.navigate("name_input") {
                     popUpTo("onboarding") { inclusive = true }
                 }
             })
         }
-        composable("message") {
-            MessageScreen()
+        composable("name_input") {
+            com.methil.aiko.ui.screens.NameInputScreen(onNameSubmitted = { name ->
+                navController.navigate("message/$name") {
+                    popUpTo("name_input") { inclusive = true }
+                }
+            })
+        }
+        composable(
+            "message/{userName}",
+            arguments = listOf(androidx.navigation.navArgument("userName") { type = androidx.navigation.NavType.StringType })
+        ) { backStackEntry ->
+            val userName = backStackEntry.arguments?.getString("userName") ?: "Utilisateur"
+            MessageScreen(userName = userName)
         }
     }
 }

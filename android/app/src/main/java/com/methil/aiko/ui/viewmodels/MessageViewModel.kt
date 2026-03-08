@@ -59,6 +59,10 @@ class MessageViewModel : ViewModel() {
         _uiState.update { it.copy(isKeyboardOpen = !it.isKeyboardOpen) }
     }
 
+    fun setUserName(name: String) {
+        repository.setUserName(name)
+    }
+
     fun dismissError() {
         _uiState.update { it.copy(errorMessage = null) }
     }

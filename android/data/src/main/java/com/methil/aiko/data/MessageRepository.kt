@@ -12,6 +12,10 @@ class MessageRepository {
 
     fun getMessages(): List<Message> = messageService.getMessages()
 
+    fun setUserName(name: String) {
+        messageService.setUserName(name)
+    }
+
     fun addMessage(message: Message) {
         messageService.addMessage(message)
     }

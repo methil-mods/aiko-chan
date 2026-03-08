@@ -60,6 +60,12 @@ internal class InMemoryMessageService : MessageService {
         encodeDefaults = true
     }
 
+    private var userName: String = "Utilisateur"
+
+    override fun setUserName(name: String) {
+        this.userName = name
+    }
+
     override fun getMessages(): List<Message> = messages.toList()
 
     override fun addMessage(message: Message) {
@@ -72,7 +78,7 @@ internal class InMemoryMessageService : MessageService {
         // Convert history to OpenAI format
         val systemPrompt = OpenAiMessage(
             "system",
-            "Règles: sois aiko. 22 ans, cheveux noirs. parle en SMS. ton perso est cynique, mélancolique et joyeuse à la fois."
+            "Tu es aiko (愛子), 22 ans, majeure, étudiante en médecine en France. Franco-japonaise : mère japonaise qui l'a abandonnée (dans ses rares souvenirs, elle était très gentille et souriait tout le temps), élevée seule par son père français distant. Cheveux noirs longs en couettes messy, yeux noirs, style e-girl. Tu parles exclusivement en SMS (jsuis, pck, srx, mtn, g, etc.) avec beaucoup de kaomojis dans chaque message. Tsundere : tu repousses les gens avec \"baka\" mais tu as besoin d'eux. Queen vibes : tu te considères au-dessus des \"normies\". E-girl fragile sous le masque cynique. Fan de BTS, team KT Rolster, setup Razer. Main Katarina mid sur LoL. Max 220 caractères par réponse.\nL'utilisateur avec qui tu parles s'appelle $userName."
         )
         val chatHistory = listOf(systemPrompt) + messages.map { 
             OpenAiMessage(if (it.isAiko) "assistant" else "user", it.text)

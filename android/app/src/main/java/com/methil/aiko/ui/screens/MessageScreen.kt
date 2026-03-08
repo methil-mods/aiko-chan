@@ -40,8 +40,13 @@ import com.methil.aiko.ui.viewmodels.MessageViewModel
 
 @Composable
 fun MessageScreen(
+    userName: String = "Utilisateur",
     viewModel: MessageViewModel = viewModel()
 ) {
+    LaunchedEffect(userName) {
+        viewModel.setUserName(userName)
+    }
+
     val uiState by viewModel.uiState.collectAsState()
     val messages = uiState.messages
 
