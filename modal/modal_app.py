@@ -2,24 +2,24 @@ import modal
 import subprocess
 import os
 
-app = modal.App("aiko-backend-vllm")
+app = modal.App("aiko-backend-llama-cpp")
 
-# Define the image with vLLM
+# Define the image with CUDA runtime + pre-built llama-cpp-python wheels
+# Uses runtime (not devel) for smaller image = faster cold start
+# Pre-built CUDA wheels = no compilation needed
 image = (
-    modal.Image.debian_slim(python_version="3.11")
+    modal.Image.from_registry(
+        "nvidia/cuda:12.4.1-devel-ubuntu22.04",
+        add_python="3.11",
+    )
     .entrypoint([])
     .pip_install(
-        "vllm",
-        "hf_transfer",
-        "torch-c-dlpack-ext"
+        "llama-cpp-python[server]",
+        extra_index_url="https://abetlen.github.io/llama-cpp-python/whl/cu124",
     )
-    .env({
-        "HF_XET_HIGH_PERFORMANCE": "1"
-    })
 )
 
 volume = modal.Volume.from_name("aiko-models", create_if_missing=True)
-vllm_cache_vol = modal.Volume.from_name("vllm-cache", create_if_missing=True)
 
 MODEL_PATH = "/models/aiko-q4.gguf"
 MINUTES = 60
@@ -27,49 +27,41 @@ MINUTES = 60
 @app.function(
     image=image,
     gpu="L40S",
-    scaledown_window=15 * MINUTES,
-    timeout=10 * MINUTES,
-    volumes={
-        "/models": volume,
-        "/root/.cache/vllm": vllm_cache_vol
-        },
+    scaledown_window=3 * MINUTES,
+    timeout=1 * MINUTES,
+    volumes={"/models": volume},
     secrets=[modal.Secret.from_name("AIKO")]
 )
-@modal.web_server(port=8000, startup_timeout=600)
+@modal.web_server(port=8000, startup_timeout=120)
 def serve():
-    # Debug: verify that the model file exists in the volume
+    # Verify model file exists
     if not os.path.exists(MODEL_PATH):
         models_dir = os.listdir("/models") if os.path.exists("/models") else "Directory not found"
         raise FileNotFoundError(f"Model file not found at {MODEL_PATH}. Contents of /models: {models_dir}")
-        
-    # Start the vLLM OpenAI-compatible server
+
+    # Build command for llama-cpp-python OpenAI-compatible server
     cmd = [
-        "vllm", "serve", MODEL_PATH,
+        "python3", "-m", "llama_cpp.server",
+        "--model", MODEL_PATH,
         "--host", "0.0.0.0",
         "--port", "8000",
-        "--max-model-len", "2048",
-        "--served-model-name", "aiko",
-        "--tokenizer", "Qwen/Qwen3-4B", 
-        "--no-enforce-eager",
-        "--disable-log-requests",
+        "--n_gpu_layers", "-1",  # Offload all layers to GPU
+        "--chat_format", "chatml",
     ]
-    
-    # Check if an API_KEY environment variable is set in the Modal app
+
+    # Check if an API_KEY environment variable is set
     api_key = os.environ.get("AIKO_API_KEY")
     if api_key:
-        cmd.extend(["--api-key", api_key])
-        
-    print(f"Starting vLLM server with command: {' '.join(cmd)}")
+        cmd.extend(["--api_key", api_key])
+
+    print(f"Starting llama-cpp server with command: {' '.join(cmd)}")
     subprocess.Popen(cmd)
 
 @app.local_entrypoint()
 def main():
-    import requests
-    import time
-    
-    print("Note: To interact with this server locally, it must be running via `modal serve backend/modal_app.py`")
-    print("Or deployed via `modal deploy backend/modal_app.py`")
+    print("Note: To interact with this server locally, it must be running via `modal serve modal/modal_app.py`")
+    print("Or deployed via `modal deploy modal/modal_app.py`")
     print("If deployed, check the Modal dashboard for the endpoint URL.")
-    
+
     print("\nTip: Make sure the model is uploaded to the 'aiko-models' volume.")
     print("Run: modal volume put aiko-models models/aiko-q4.gguf /aiko-q4.gguf")
