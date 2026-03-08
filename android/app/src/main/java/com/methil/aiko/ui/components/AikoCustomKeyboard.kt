@@ -42,13 +42,14 @@ data class KeyboardKeyData(
 @Preview(showBackground = true)
 @Composable
 fun AikoCustomKeyboardPreview() {
-    AikoCustomKeyboard(onKeyClick = {}, onDelete = {})
+    AikoCustomKeyboard(onKeyClick = {}, onDelete = {}, onEnter = {})
 }
 
 @Composable
 fun AikoCustomKeyboard(
     onKeyClick: (String) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEnter: () -> Unit
 ) {
     val row1 = listOf(
         KeyboardKeyData(R.drawable.kb_q, KeyboardKeyAction.Type("q")),
@@ -109,10 +110,10 @@ fun AikoCustomKeyboard(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            KeyboardRow(row1, onKeyClick, onDelete)
-            KeyboardRow(row2, onKeyClick, onDelete)
-            KeyboardRow(row3, onKeyClick, onDelete)
-            KeyboardRow(row4, onKeyClick, onDelete)
+            KeyboardRow(row1, onKeyClick, onDelete, onEnter)
+            KeyboardRow(row2, onKeyClick, onDelete, onEnter)
+            KeyboardRow(row3, onKeyClick, onDelete, onEnter)
+            KeyboardRow(row4, onKeyClick, onDelete, onEnter)
         }
     }
 }
@@ -121,7 +122,8 @@ fun AikoCustomKeyboard(
 fun KeyboardRow(
     keys: List<KeyboardKeyData>,
     onKeyClick: (String) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEnter: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -136,7 +138,7 @@ fun KeyboardRow(
                         is KeyboardKeyAction.Type -> onKeyClick(key.action.char)
                         KeyboardKeyAction.Delete -> onDelete()
                         KeyboardKeyAction.Space -> onKeyClick(" ")
-                        KeyboardKeyAction.Enter -> onKeyClick("\n")
+                        KeyboardKeyAction.Enter -> onEnter()
                         else -> { /* Handle Shift/Numbers if needed */ }
                     }
                 }

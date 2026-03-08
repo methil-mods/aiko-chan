@@ -172,7 +172,8 @@ fun MessageScreen(
                         if (uiState.inputText.isNotEmpty()) {
                             viewModel.onInputTextChanged(uiState.inputText.dropLast(1))
                         }
-                    }
+                    },
+                    onEnter = { viewModel.sendMessage() }
                 )
             }
         }

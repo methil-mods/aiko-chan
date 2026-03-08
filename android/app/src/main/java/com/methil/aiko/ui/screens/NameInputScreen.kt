@@ -162,19 +162,18 @@ fun NameInputScreen(
                 ) {
                     AikoCustomKeyboard(
                         onKeyClick = { key ->
-                            if (key == "\n") {
-                                if (name.isNotBlank()) {
-                                    onNameSubmitted(name.trim())
-                                } else {
-                                    isKeyboardOpen = false
-                                }
-                            } else {
-                                name += key
-                            }
+                            name += key
                         },
                         onDelete = {
                             if (name.isNotEmpty()) {
                                 name = name.dropLast(1)
+                            }
+                        },
+                        onEnter = {
+                            if (name.isNotBlank()) {
+                                onNameSubmitted(name.trim())
+                            } else {
+                                isKeyboardOpen = false
                             }
                         }
                     )
