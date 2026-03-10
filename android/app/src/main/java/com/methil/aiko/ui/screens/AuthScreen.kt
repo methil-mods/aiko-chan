@@ -39,8 +39,9 @@ fun AuthScreen(
 ) {
     var isLogin by remember { mutableStateOf(true) }
     var username by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") } // Pseudo pour l'inscription
     var password by remember { mutableStateOf("") }
-    var activeField by remember { mutableStateOf(0) } // 0: username, 1: password
+    var activeField by remember { mutableStateOf(0) } // 0: username, 1: password, 2: name
     var isKeyboardOpen by remember { mutableStateOf(true) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -110,6 +111,19 @@ fun AuthScreen(
                         }
                     )
 
+                    if (!isLogin) {
+                        AuthInputField(
+                            label = "Nom / Pseudo",
+                            value = name,
+                            isActive = activeField == 2 && isKeyboardOpen,
+                            cursorAlpha = cursorAlpha,
+                            onClick = { 
+                                activeField = 2
+                                isKeyboardOpen = true
+                            }
+                        )
+                    }
+
                     AuthInputField(
                         label = "Password",
                         value = password,
@@ -148,7 +162,7 @@ fun AuthScreen(
                                         errorMessage = "Login failed: ${it.message}"
                                     }
                                 } else {
-                                    val result = authService.register(RegisterRequest(username, password))
+                                    val result = authService.register(RegisterRequest(username, name, password))
                                     result.onSuccess {
                                         isLogin = true
                                         errorMessage = "Success! Please login."
@@ -162,7 +176,7 @@ fun AuthScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),
-                        enabled = !isLoading && username.isNotBlank() && password.isNotBlank(),
+                        enabled = !isLoading && username.isNotBlank() && password.isNotBlank() && (isLogin || name.isNotBlank()),
                         colors = ButtonDefaults.buttonColors(containerColor = LightestPink),
                         shape = RoundedCornerShape(0.dp),
                         border = BorderStroke(2.dp, DarkPurple)

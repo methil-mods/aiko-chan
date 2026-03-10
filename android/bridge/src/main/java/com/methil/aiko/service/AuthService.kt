@@ -3,18 +3,38 @@ package com.methil.aiko.service
 import com.methil.aiko.domain.AuthResponse
 import com.methil.aiko.domain.LoginRequest
 import com.methil.aiko.domain.RegisterRequest
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 
+@Serializable
+private data class ErrorResponse(val error: String)
+
 class AuthService(private val baseUrl: String) {
     private val client = OkHttpClient()
     private val json = Json { ignoreUnknownKeys = true }
     private val mediaType = "application/json; charset=utf-8".toMediaType()
+
+    private fun parseError(response: okhttp3.Response): String {
+        return try {
+            val bodyString = response.body?.string()
+            if (bodyString != null) {
+                val errorResponse = json.decodeFromString<ErrorResponse>(bodyString)
+                errorResponse.error
+            } else {
+                "Erreur serveur: ${response.code}"
+            }
+        } catch (e: Exception) {
+            "Erreur serveur: ${response.code}"
+        }
+    }
 
     suspend fun login(request: LoginRequest): Result<AuthResponse> {
         val body = json.encodeToString(request).toRequestBody(mediaType)
@@ -23,7 +43,9 @@ class AuthService(private val baseUrl: String) {
             .post(body)
             .build()
 
-        return executeRequest(httpRequest)
+        return withContext(Dispatchers.IO) {
+            executeRequest(httpRequest)
+        }
     }
 
     suspend fun register(request: RegisterRequest): Result<String> {
@@ -33,16 +55,18 @@ class AuthService(private val baseUrl: String) {
             .post(body)
             .build()
 
-        return try {
-            client.newCall(httpRequest).execute().use { response ->
-                if (response.isSuccessful) {
-                    Result.success("User created")
-                } else {
-                    Result.failure(Exception("Registration failed: ${response.code}"))
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(httpRequest).execute().use { response ->
+                    if (response.isSuccessful) {
+                        Result.success("User created")
+                    } else {
+                        Result.failure(Exception(parseError(response)))
+                    }
                 }
+            } catch (e: IOException) {
+                Result.failure(e)
             }
-        } catch (e: IOException) {
-            Result.failure(e)
         }
     }
 
@@ -54,7 +78,7 @@ class AuthService(private val baseUrl: String) {
                     val authResponse = json.decodeFromString<AuthResponse>(bodyString)
                     Result.success(authResponse)
                 } else {
-                    Result.failure(Exception("Auth failed: ${response.code}"))
+                    Result.failure(Exception(parseError(response)))
                 }
             }
         } catch (e: Exception) {

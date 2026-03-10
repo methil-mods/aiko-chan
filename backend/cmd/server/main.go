@@ -26,7 +26,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Échec de la migration : %v", err)
 	}
-	log.Println("Migrations effectuées")
+	log.Println("\033[32mMigrations effectuées\033[0m")
 
 	// Initialisation du handler de proxy
 	proxyHandler, err := handlers.NewProxyHandler()
@@ -53,7 +53,7 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Backend Proxy AIKO démarré sur le port %s", port)
+	log.Printf("\033[36mBackend Proxy AIKO démarré sur le port %s\033[0m", port)
 	
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatalf("Erreur serveur : %v", err)

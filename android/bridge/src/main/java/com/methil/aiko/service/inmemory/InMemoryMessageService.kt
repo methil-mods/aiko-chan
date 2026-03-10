@@ -1,5 +1,6 @@
 package com.methil.aiko.service.inmemory
 
+import android.util.Base64
 import android.util.Log
 import com.methil.aiko.bridge.AikoConfig
 import com.methil.aiko.domain.Message
@@ -19,6 +20,9 @@ import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.Serializable
+
+@Serializable
+private data class JwtPayload(val name: String? = null, val username: String? = null)
 
 @Serializable
 data class OpenAiMessage(val role: String, val content: String)
@@ -73,8 +77,20 @@ internal class InMemoryMessageService : MessageService {
 
     override fun streamChat(message: String, jwtToken: String): Flow<TokenResponse> {
         // Le chat passe maintenant par le backend Go qui fait proxy vers Modal
-        val url = "$baseUrl/chat/completions"
+        val url = "$baseUrl/v1/chat/completions"
         
+        // Décoder le JWT pour récupérer le nom de l'utilisateur
+        try {
+            val parts = jwtToken.split(".")
+            if (parts.size == 3) {
+                val payloadStr = String(Base64.decode(parts[1], Base64.URL_SAFE))
+                val payload = json.decodeFromString<JwtPayload>(payloadStr)
+                userName = payload.name ?: payload.username ?: "Utilisateur"
+            }
+        } catch (e: Exception) {
+            Log.e("AikoSSE", "Failed to decode JWT: ${e.message}")
+        }
+
         // Convert history to OpenAI format
         val systemPrompt = OpenAiMessage(
             "system",
