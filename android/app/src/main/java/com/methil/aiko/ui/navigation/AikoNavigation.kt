@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.methil.aiko.ui.screens.AuthScreen
 import com.methil.aiko.ui.screens.MessageScreen
 import com.methil.aiko.ui.screens.OnboardingScreen
 import com.methil.aiko.ui.screens.SplashScreen
@@ -27,8 +28,16 @@ fun AikoNavigation(modifier: Modifier = Modifier) {
         }
         composable("onboarding") {
             OnboardingScreen(onStartClick = {
-                navController.navigate("name_input") {
+                navController.navigate("auth") {
                     popUpTo("onboarding") { inclusive = true }
+                }
+            })
+        }
+        composable("auth") {
+            AuthScreen(onAuthSuccess = { token ->
+                // TODO: Store token in DataStore or similar
+                navController.navigate("name_input") {
+                    popUpTo("auth") { inclusive = true }
                 }
             })
         }
