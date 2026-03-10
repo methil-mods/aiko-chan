@@ -28,8 +28,9 @@ import com.methil.aiko.ui.theme.LightViolet
 import com.methil.aiko.ui.theme.LightestPink
 import com.methil.aiko.domain.LoginRequest
 import com.methil.aiko.domain.RegisterRequest
+import androidx.compose.foundation.BorderStroke
 import com.methil.aiko.service.AuthService
-import com.methil.data.AikoConfig
+import com.methil.aiko.bridge.AikoConfig
 import kotlinx.coroutines.launch
 
 @Composable
@@ -45,7 +46,7 @@ fun AuthScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
     val scope = rememberCoroutineScope()
-    val authService = remember { AuthService(AikoConfig.AUTH_URL) }
+    val authService = remember { AuthService(AikoConfig.BASE_URL) }
     
     val infiniteTransition = rememberInfiniteTransition(label = "CursorTransition")
     val cursorAlpha by infiniteTransition.animateFloat(
@@ -167,7 +168,7 @@ fun AuthScreen(
                         border = BorderStroke(2.dp, DarkPurple)
                     ) {
                         if (isLoading) {
-                            CircularProgressIndicator(size = 24.dp, color = DarkPurple)
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = DarkPurple)
                         } else {
                             Text(
                                 text = if (isLogin) "Se connecter" else "S'enregistrer",

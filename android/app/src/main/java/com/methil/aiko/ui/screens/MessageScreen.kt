@@ -41,10 +41,12 @@ import com.methil.aiko.ui.viewmodels.MessageViewModel
 @Composable
 fun MessageScreen(
     userName: String = "Utilisateur",
+    sessionToken: String = "",
     viewModel: MessageViewModel = viewModel()
 ) {
-    LaunchedEffect(userName) {
+    LaunchedEffect(userName, sessionToken) {
         viewModel.setUserName(userName)
+        viewModel.setSessionToken(sessionToken)
     }
 
     val uiState by viewModel.uiState.collectAsState()

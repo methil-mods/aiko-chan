@@ -20,7 +20,7 @@ class MessageRepository {
         messageService.addMessage(message)
     }
 
-    fun streamChat(message: String): Flow<TokenResponse> {
-        return messageService.streamChat(message)
+    fun streamChat(message: String, jwtToken: String): Flow<TokenResponse> {
+        return messageService.streamChat(message, jwtToken)
     }
 }

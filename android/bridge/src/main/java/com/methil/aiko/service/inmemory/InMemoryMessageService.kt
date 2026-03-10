@@ -1,7 +1,7 @@
 package com.methil.aiko.service.inmemory
 
 import android.util.Log
-import com.methil.data.AikoConfig
+import com.methil.aiko.bridge.AikoConfig
 import com.methil.aiko.domain.Message
 import com.methil.aiko.domain.TokenResponse
 import com.methil.aiko.service.MessageService
@@ -44,7 +44,6 @@ data class OpenAiStreamResponse(val choices: List<OpenAiChoice>)
 internal class InMemoryMessageService : MessageService {
     private val baseUrl = AikoConfig.BASE_URL
     private val defaultModel = AikoConfig.DEFAULT_MODEL
-    private val apiKey = AikoConfig.API_KEY
     
     private val messages = mutableListOf<Message>()
     
@@ -72,7 +71,8 @@ internal class InMemoryMessageService : MessageService {
         messages.add(message)
     }
 
-    override fun streamChat(message: String): Flow<TokenResponse> {
+    override fun streamChat(message: String, jwtToken: String): Flow<TokenResponse> {
+        // Le chat passe maintenant par le backend Go qui fait proxy vers Modal
         val url = "$baseUrl/chat/completions"
         
         // Convert history to OpenAI format
@@ -98,7 +98,7 @@ internal class InMemoryMessageService : MessageService {
         val request = Request.Builder()
             .url(url)
             .post(body)
-            .header("Authorization", "Bearer $apiKey")
+            .header("Authorization", "Bearer $jwtToken")
             .header("Accept", "text/event-stream")
             .build()
 

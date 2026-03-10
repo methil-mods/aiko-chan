@@ -15,7 +15,7 @@ android {
     buildFeatures {
         buildConfig = true
     }
-    namespace = "com.methil.data"
+    namespace = "com.methil.aiko.bridge"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1

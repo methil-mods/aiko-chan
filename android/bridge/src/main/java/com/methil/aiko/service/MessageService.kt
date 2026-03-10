@@ -8,5 +8,5 @@ interface MessageService {
     fun getMessages(): List<Message>
     fun setUserName(name: String)
     fun addMessage(message: Message)
-    fun streamChat(message: String): Flow<TokenResponse>
+    fun streamChat(message: String, jwtToken: String): Flow<TokenResponse>
 }

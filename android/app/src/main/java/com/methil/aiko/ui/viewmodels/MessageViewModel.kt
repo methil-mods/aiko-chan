@@ -34,6 +34,12 @@ class MessageViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
+    private var sessionToken: String? = null
+
+    fun setSessionToken(token: String) {
+        this.sessionToken = token
+    }
+
     init {
         loadMessages()
     }
@@ -93,7 +99,8 @@ class MessageViewModel : ViewModel() {
             var hasStartedReceivingTokens = false
             try {
                 repository.streamChat(
-                    message = userMessageText
+                    message = userMessageText,
+                    jwtToken = sessionToken ?: ""
                 ).collect { response ->
                     if (!hasStartedReceivingTokens && response.token != null) {
                         hasStartedReceivingTokens = true
