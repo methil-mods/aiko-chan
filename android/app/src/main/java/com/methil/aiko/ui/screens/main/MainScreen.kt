@@ -15,7 +15,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.ui.unit.dp
 import com.methil.aiko.ui.navigation.AikoScreen
+import com.methil.aiko.ui.theme.DarkPurple
+import com.methil.aiko.ui.theme.LightestPink
 
 @Composable
 fun MainScreen(
@@ -26,15 +30,26 @@ fun MainScreen(
     
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = DarkPurple,
+                contentColor = LightestPink,
+                tonalElevation = 0.dp
+            ) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
                 
                 AikoScreen.items.forEach { screen ->
                     NavigationBarItem(
                         icon = { Icon(screen.icon, contentDescription = null) },
-                        label = { Text(screen.title) },
+                        label = { Text(screen.title, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace) },
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = DarkPurple,
+                            selectedTextColor = LightestPink,
+                            unselectedIconColor = LightestPink.copy(alpha = 0.6f),
+                            unselectedTextColor = LightestPink.copy(alpha = 0.6f),
+                            indicatorColor = LightestPink
+                        ),
                         onClick = {
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {

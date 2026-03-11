@@ -21,11 +21,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AikoTheme {
-                Scaffold(
-                    modifier = Modifier.fillMaxSize()
-                ) { innerPadding ->
-                    AikoNavigation(modifier = Modifier.padding(innerPadding))
-                }
+                AikoNavigation()
             }
         }
     }
