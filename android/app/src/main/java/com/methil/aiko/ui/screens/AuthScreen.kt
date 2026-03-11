@@ -164,8 +164,12 @@ fun AuthScreen(
                                 } else {
                                     val result = authService.register(RegisterRequest(username, name, password))
                                     result.onSuccess {
-                                        isLogin = true
-                                        errorMessage = "Success! Please login."
+                                        val loginResult = authService.login(LoginRequest(username, password))
+                                        loginResult.onSuccess { authRes ->
+                                            onAuthSuccess(authRes.token)
+                                        }.onFailure { loginErr ->
+                                            errorMessage = "Login failed: ${loginErr.message}"
+                                        }
                                     }.onFailure {
                                         errorMessage = "Registration failed: ${it.message}"
                                     }
@@ -217,17 +221,25 @@ fun AuthScreen(
                 ) {
                     AikoCustomKeyboard(
                         onKeyClick = { key ->
-                            if (activeField == 0) username += key else password += key
+                            when (activeField) {
+                                0 -> username += key
+                                1 -> password += key
+                                2 -> name += key
+                            }
                         },
                         onDelete = {
-                            if (activeField == 0) {
-                                if (username.isNotEmpty()) username = username.dropLast(1)
-                            } else {
-                                if (password.isNotEmpty()) password = password.dropLast(1)
+                            when (activeField) {
+                                0 -> if (username.isNotEmpty()) username = username.dropLast(1)
+                                1 -> if (password.isNotEmpty()) password = password.dropLast(1)
+                                2 -> if (name.isNotEmpty()) name = name.dropLast(1)
                             }
                         },
                         onEnter = {
-                            if (activeField == 0) activeField = 1 else isKeyboardOpen = false
+                            when (activeField) {
+                                0 -> activeField = if (isLogin) 1 else 2
+                                2 -> activeField = 1
+                                1 -> isKeyboardOpen = false
+                            }
                         }
                     )
                 }
