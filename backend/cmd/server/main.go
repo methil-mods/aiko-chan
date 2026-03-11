@@ -64,7 +64,14 @@ func main() {
 	mux.Handle("/assets/", http.StripPrefix("/assets/", fileServer))
 
 	// Routes protégées par JWT
-	mux.Handle("/profile", auth.AuthMiddleware(http.HandlerFunc(handlers.GetProfile)))
+	mux.Handle("/profile", auth.AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPut {
+			handlers.UpdateProfile(w, r)
+		} else {
+			handlers.GetProfile(w, r)
+		}
+	})))
+	mux.Handle("/profile/avatar", auth.AuthMiddleware(http.HandlerFunc(handlers.UpdateAvatar)))
 	mux.Handle("/characters", auth.AuthMiddleware(http.HandlerFunc(handlers.GetCharacters)))
 	mux.Handle("/", auth.AuthMiddleware(proxyHandler))
 

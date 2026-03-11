@@ -15,4 +15,6 @@ type User struct {
 	Username  string         `gorm:"uniqueIndex;not null" json:"username"`
 	Name      string         `gorm:"not null" json:"name"`
 	Password  string         `gorm:"not null" json:"-"`
+	Age       int            `gorm:"default:20" json:"age"`
+	AvatarUrl string         `gorm:"default:''" json:"avatar_url"`
 }

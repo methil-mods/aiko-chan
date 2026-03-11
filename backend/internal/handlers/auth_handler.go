@@ -5,7 +5,9 @@ import (
 	"backend/internal/database"
 	"backend/internal/models"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -56,9 +58,11 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := models.User{
-		Username: req.Username,
-		Name:     req.Name,
-		Password: string(hashedPassword),
+		Username:  req.Username,
+		Name:      req.Name,
+		Password:  string(hashedPassword),
+		Age:       20,
+		AvatarUrl: fmt.Sprintf("https://api.dicebear.com/9.x/lorelei-neutral/svg?seed=%d", time.Now().UnixNano()),
 	}
 
 	if err := database.DB.Create(&user).Error; err != nil {
@@ -119,6 +123,50 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	if err := database.DB.First(&user, claims.UserID).Error; err != nil {
 		sendError(w, "Utilisateur non trouvé dans la base", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+// UpdateProfile met à jour les informations de l'utilisateur
+func UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		sendError(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+
+	claims, ok := r.Context().Value(auth.UserContextKey).(*auth.Claims)
+	if !ok {
+		sendError(w, "Utilisateur non trouvé dans le contexte", http.StatusInternalServerError)
+		return
+	}
+
+	var req struct {
+		Name string `json:"name"`
+		Age  int    `json:"age"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendError(w, "Requête JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	var user models.User
+	if err := database.DB.First(&user, claims.UserID).Error; err != nil {
+		sendError(w, "Utilisateur non trouvé", http.StatusNotFound)
+		return
+	}
+
+	if req.Name != "" {
+		user.Name = req.Name
+	}
+	if req.Age > 0 {
+		user.Age = req.Age
+	}
+
+	if err := database.DB.Save(&user).Error; err != nil {
+		sendError(w, "Erreur lors de la mise à jour du profil", http.StatusInternalServerError)
 		return
 	}
 
