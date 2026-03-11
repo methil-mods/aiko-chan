@@ -197,13 +197,11 @@ fun KeyboardKey(
                         .width(48.dp)
                         .height(58.dp)
                         .background(
-                            Color(0xFFF3EDFF),
-                            RoundedCornerShape(10.dp)
+                            Color(0xFFF3EDFF)
                         )
                         .border(
                             1.5.dp,
-                            Color(0xFFCBA4F5),
-                            RoundedCornerShape(10.dp)
+                            Color(0xFFCBA4F5)
                         ),
                     contentAlignment = Alignment.Center
                 ) {

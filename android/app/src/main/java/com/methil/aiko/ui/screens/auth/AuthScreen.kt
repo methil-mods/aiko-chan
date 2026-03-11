@@ -4,6 +4,8 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -41,7 +43,7 @@ fun AuthScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val tokenManager = remember { TokenManager(context) }
-    var isLogin by remember { mutableStateOf(true) }
+    var isLogin by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") } // Pseudo pour l'inscription
     var password by remember { mutableStateOf("") }
@@ -88,8 +90,9 @@ fun AuthScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
                     .align(Alignment.Center)
-                    .offset(y = (-60).dp)
+                    .offset(y = (-100).dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -109,6 +112,7 @@ fun AuthScreen(
                         value = username,
                         isActive = activeField == 0 && isKeyboardOpen,
                         cursorAlpha = cursorAlpha,
+                        isRequired = true,
                         onClick = { 
                             activeField = 0
                             isKeyboardOpen = true
@@ -121,6 +125,7 @@ fun AuthScreen(
                             value = name,
                             isActive = activeField == 2 && isKeyboardOpen,
                             cursorAlpha = cursorAlpha,
+                            isRequired = true,
                             onClick = { 
                                 activeField = 2
                                 isKeyboardOpen = true
@@ -134,6 +139,7 @@ fun AuthScreen(
                         isActive = activeField == 1 && isKeyboardOpen,
                         cursorAlpha = cursorAlpha,
                         isPassword = true,
+                        isRequired = true,
                         onClick = { 
                             activeField = 1
                             isKeyboardOpen = true
@@ -155,6 +161,10 @@ fun AuthScreen(
                     Button(
                         onClick = {
                             if (username.isBlank() || password.isBlank()) return@Button
+                            if (password.length < 8) {
+                                errorMessage = "Le mot de passe doit faire au moins 8 caractères"
+                                return@Button
+                            }
                             isLoading = true
                             errorMessage = null
                             scope.launch {
@@ -191,7 +201,7 @@ fun AuthScreen(
                             .height(48.dp),
                         enabled = !isLoading && username.isNotBlank() && password.isNotBlank() && (isLogin || name.isNotBlank()),
                         colors = ButtonDefaults.buttonColors(containerColor = LightestPink),
-                        shape = RoundedCornerShape(0.dp),
+                        shape = RectangleShape,
                         border = BorderStroke(2.dp, DarkPurple)
                     ) {
                         if (isLoading) {
@@ -264,17 +274,33 @@ fun AuthInputField(
     isActive: Boolean,
     cursorAlpha: Float,
     isPassword: Boolean = false,
+    isRequired: Boolean = false,
     onClick: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = label, fontSize = 14.sp, color = DarkPurple)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = label,
+                fontSize = 14.sp,
+                color = DarkPurple,
+                fontFamily = FontFamily.Monospace
+            )
+            if (isRequired) {
+                Text(
+                    text = "*",
+                    color = Color.Red,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(start = 2.dp)
+                )
+            }
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(44.dp)
-                .background(Color.White, RoundedCornerShape(4.dp))
-                .border(2.dp, if (isActive) DarkPurple else LightViolet, RoundedCornerShape(4.dp))
-                .clip(RoundedCornerShape(4.dp))
+                .background(Color.Black)
+                .border(2.dp, if (isActive) DarkPurple else LightViolet)
+                .clip(RectangleShape)
                 .clickable { onClick() },
             contentAlignment = Alignment.CenterStart
         ) {
@@ -285,16 +311,17 @@ fun AuthInputField(
                 val displayText = if (isPassword) "•".repeat(value.length) else value
                 Text(
                     text = displayText,
-                    color = DarkPurple,
+                    color = Color.White,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace
                 )
                 if (isActive) {
                     Box(
                         modifier = Modifier
                             .padding(start = 2.dp)
                             .size(width = 2.dp, height = 20.dp)
-                            .background(DarkPurple)
+                            .background(Color.White)
                             .graphicsLayer { alpha = cursorAlpha }
                     )
                 }

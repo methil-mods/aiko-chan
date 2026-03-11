@@ -44,6 +44,11 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(req.Password) < 8 {
+		sendError(w, "Le mot de passe doit faire au moins 8 caractères", http.StatusBadRequest)
+		return
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		sendError(w, "Erreur interne de hachage", http.StatusInternalServerError)

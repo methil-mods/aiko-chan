@@ -30,7 +30,7 @@ fun XpWindow(
         // Hard shadow (solid offset rectangle)
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .matchParentSize()
                 .offset(x = shadowOffset, y = shadowOffset)
                 .background(shadowColor)
         )
@@ -73,7 +73,7 @@ fun XpWindow(
                     }
                 }
                 // Content
-                Box(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.wrapContentHeight()) {
                     content()
                 }
             }
