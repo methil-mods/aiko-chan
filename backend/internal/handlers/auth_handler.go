@@ -102,3 +102,21 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
+
+// GetProfile retourne les informations de l'utilisateur connecté
+func GetProfile(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value(auth.UserContextKey).(*auth.Claims)
+	if !ok {
+		sendError(w, "Utilisateur non trouvé dans le contexte", http.StatusInternalServerError)
+		return
+	}
+
+	var user models.User
+	if err := database.DB.First(&user, claims.UserID).Error; err != nil {
+		sendError(w, "Utilisateur non trouvé dans la base", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}

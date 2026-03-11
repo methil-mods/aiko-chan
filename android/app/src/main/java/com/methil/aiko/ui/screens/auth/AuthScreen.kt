@@ -31,12 +31,15 @@ import com.methil.aiko.domain.RegisterRequest
 import androidx.compose.foundation.BorderStroke
 import com.methil.aiko.service.AuthService
 import com.methil.aiko.bridge.AikoConfig
+import com.methil.aiko.data.TokenManager
 import kotlinx.coroutines.launch
 
 @Composable
 fun AuthScreen(
     onAuthSuccess: (String) -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
     var isLogin by remember { mutableStateOf(true) }
     var username by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") } // Pseudo pour l'inscription
@@ -157,6 +160,7 @@ fun AuthScreen(
                                 if (isLogin) {
                                     val result = authService.login(LoginRequest(username, password))
                                     result.onSuccess {
+                                        tokenManager.saveToken(it.token)
                                         onAuthSuccess(it.token)
                                     }.onFailure {
                                         errorMessage = "Login failed: ${it.message}"
@@ -166,6 +170,7 @@ fun AuthScreen(
                                     result.onSuccess {
                                         val loginResult = authService.login(LoginRequest(username, password))
                                         loginResult.onSuccess { authRes ->
+                                            tokenManager.saveToken(authRes.token)
                                             onAuthSuccess(authRes.token)
                                         }.onFailure { loginErr ->
                                             errorMessage = "Login failed: ${loginErr.message}"

@@ -22,8 +22,8 @@ class AuthService(private val baseUrl: String) {
     private val json = Json { ignoreUnknownKeys = true }
     private val mediaType = "application/json; charset=utf-8".toMediaType()
 
-    private fun parseError(response: okhttp3.Response): String {
-        return try {
+    private suspend fun parseError(response: okhttp3.Response): String = withContext(Dispatchers.IO) {
+        try {
             val bodyString = response.body?.string()
             if (bodyString != null) {
                 val errorResponse = json.decodeFromString<ErrorResponse>(bodyString)
@@ -61,7 +61,8 @@ class AuthService(private val baseUrl: String) {
                     if (response.isSuccessful) {
                         Result.success("User created")
                     } else {
-                        Result.failure(Exception(parseError(response)))
+                        val errorMessage = parseError(response)
+                        Result.failure(Exception(errorMessage))
                     }
                 }
             } catch (e: IOException) {
@@ -70,15 +71,66 @@ class AuthService(private val baseUrl: String) {
         }
     }
 
-    private fun executeRequest(httpRequest: Request): Result<AuthResponse> {
-        return try {
+    suspend fun getProfile(token: String): Result<com.methil.aiko.domain.UserProfile> {
+        val httpRequest = Request.Builder()
+            .url("$baseUrl/profile")
+            .header("Authorization", "Bearer $token")
+            .get()
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(httpRequest).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val bodyString = response.body?.string() ?: return@withContext Result.failure(Exception("Empty body"))
+                        val profile = json.decodeFromString<com.methil.aiko.domain.UserProfile>(bodyString)
+                        Result.success(profile)
+                    } else {
+                        val errorMessage = parseError(response)
+                        Result.failure(Exception(errorMessage))
+                    }
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun getCharacters(token: String): Result<List<com.methil.aiko.domain.Character>> {
+        val httpRequest = Request.Builder()
+            .url("$baseUrl/characters")
+            .header("Authorization", "Bearer $token")
+            .get()
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(httpRequest).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val bodyString = response.body?.string() ?: return@withContext Result.failure(Exception("Empty body"))
+                        val characters = json.decodeFromString<List<com.methil.aiko.domain.Character>>(bodyString)
+                        Result.success(characters)
+                    } else {
+                        val errorMessage = parseError(response)
+                        Result.failure(Exception(errorMessage))
+                    }
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    private suspend fun executeRequest(httpRequest: Request): Result<AuthResponse> = withContext(Dispatchers.IO) {
+        try {
             client.newCall(httpRequest).execute().use { response ->
                 if (response.isSuccessful) {
-                    val bodyString = response.body?.string() ?: return Result.failure(Exception("Empty body"))
+                    val bodyString = response.body?.string() ?: return@withContext Result.failure(Exception("Empty body"))
                     val authResponse = json.decodeFromString<AuthResponse>(bodyString)
                     Result.success(authResponse)
                 } else {
-                    Result.failure(Exception(parseError(response)))
+                    val errorMessage = parseError(response)
+                    Result.failure(Exception(errorMessage))
                 }
             }
         } catch (e: Exception) {

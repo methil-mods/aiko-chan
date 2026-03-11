@@ -37,6 +37,9 @@ import com.methil.aiko.ui.theme.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.methil.aiko.ui.viewmodels.MessageUI
 import com.methil.aiko.ui.viewmodels.MessageViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Star
 
 @Composable
 fun MessageScreen(
@@ -199,11 +202,14 @@ fun StatRow(label: String, iconUrl: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(label, fontSize = 12.sp, color = DarkPurple, modifier = Modifier.width(35.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            val icon = if (label == "LUV") Icons.Default.Favorite else Icons.Default.Star
+            val color = if (label == "LUV") Color(0xFFFF4081) else Color(0xFFFFD600)
             repeat(5) {
-                AsyncImage(
-                    model = iconUrl,
+                Icon(
+                    imageVector = icon,
                     contentDescription = null,
-                    modifier = Modifier.size(14.dp)
+                    modifier = Modifier.size(14.dp),
+                    tint = color
                 )
             }
         }

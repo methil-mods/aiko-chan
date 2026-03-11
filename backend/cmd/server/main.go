@@ -22,11 +22,23 @@ func main() {
 	database.InitDB()
 	
 	// Migrations automatiques
-	err := database.DB.AutoMigrate(&models.User{})
+	err := database.DB.AutoMigrate(&models.User{}, &models.Character{})
 	if err != nil {
 		log.Fatalf("Échec de la migration : %v", err)
 	}
 	log.Println("\033[32mMigrations effectuées\033[0m")
+
+	// Seed characters si la table est vide
+	var count int64
+	database.DB.Model(&models.Character{}).Count(&count)
+	if count == 0 {
+		database.DB.Create(&models.Character{
+			Name:      "aiko",
+			ModelName: "aiko-4B",
+			Preprompt: "Tu es Aiko-chan, une étudiante en médecine de 22 ans...",
+		})
+		log.Println("\033[32mDonnées de test insérées\033[0m")
+	}
 
 	// Initialisation du handler de proxy
 	proxyHandler, err := handlers.NewProxyHandler()
@@ -46,6 +58,8 @@ func main() {
 	})
 
 	// Routes protégées par JWT
+	mux.Handle("/profile", auth.AuthMiddleware(http.HandlerFunc(handlers.GetProfile)))
+	mux.Handle("/characters", auth.AuthMiddleware(http.HandlerFunc(handlers.GetCharacters)))
 	mux.Handle("/", auth.AuthMiddleware(proxyHandler))
 
 	port := os.Getenv("PORT")

@@ -52,10 +52,10 @@ fun MainScreen(sessionToken: String) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(AikoScreen.Characters.route) {
-                CharactersScreen()
+                CharactersScreen(sessionToken = sessionToken)
             }
             composable(AikoScreen.Profile.route) {
-                ProfileScreen()
+                ProfileScreen(sessionToken = sessionToken)
             }
             composable(AikoScreen.Settings.route) {
                 SettingsScreen()
