@@ -17,10 +17,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import com.methil.aiko.R
 import com.methil.aiko.ui.theme.LightViolet
+import com.methil.aiko.data.TokenManager
+import com.methil.aiko.service.AuthService
+import com.methil.aiko.bridge.AikoConfig
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
-fun SplashScreen(onSplashFinished: () -> Unit) {
+fun SplashScreen(onSplashFinished: (String?) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+    val authService = remember { AuthService(AikoConfig.BASE_URL) }
+    var validatedToken by remember { mutableStateOf<String?>(null) }
     // Animation stages
     // Stage 1: Initial scale 0.6 -> 0.75 (0-800ms)
     // Stage 2: Hold at 0.75 (800-1200ms)
@@ -89,6 +97,21 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
     )
 
     LaunchedEffect(Unit) {
+        // Start validation in parallel with animation
+        val job = launch {
+            val savedToken = tokenManager.getToken()
+            if (savedToken != null) {
+                authService.getProfile(savedToken).onSuccess {
+                    validatedToken = savedToken
+                }.onFailure {
+                    tokenManager.clearToken() // Clear invalid token
+                    validatedToken = null
+                }
+            } else {
+                validatedToken = null
+            }
+        }
+
         stage = 1
         delay(1200) // Wait 1.2s before sliding
         stage = 2
@@ -100,7 +123,9 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
         stage = 5 // Start dither transition
         showDither = true
         delay(800) // Wait for dither to slide
-        onSplashFinished()
+        
+        job.join() // Ensure validation is done before finishing splash
+        onSplashFinished(validatedToken)
     }
 
     Box(

@@ -21,12 +21,9 @@ fun AikoNavigation(modifier: Modifier = Modifier) {
         modifier = modifier
     ) {
         composable("splash") {
-            val context = androidx.compose.ui.platform.LocalContext.current
-            val tokenManager = com.methil.aiko.data.TokenManager(context)
-            SplashScreen(onSplashFinished = {
-                val savedToken = tokenManager.getToken()
-                if (savedToken != null) {
-                    navController.navigate("main/$savedToken") {
+            SplashScreen(onSplashFinished = { validatedToken ->
+                if (validatedToken != null) {
+                    navController.navigate("main/$validatedToken") {
                         popUpTo("splash") { inclusive = true }
                     }
                 } else {
