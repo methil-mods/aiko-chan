@@ -21,7 +21,9 @@ pip install -e ".[dev]"
 cp config.example.yaml config.yaml
 
 # 4. Augment
-python -m src augment -c config.yaml
+python -m src augment -c config.yaml -w 8
+
+# -w is the amount of worker / thread to work on the augmentation in parelle
 
 # 5. Label a seed set for filtering
 python -m src label -c config.yaml
