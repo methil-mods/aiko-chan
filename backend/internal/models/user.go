@@ -1,13 +1,18 @@
 package models
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
 // User représente un utilisateur dans la base de données
 type User struct {
-	gorm.Model
-	Username string `gorm:"uniqueIndex;not null" json:"username"`
-	Name     string `gorm:"not null" json:"name"`
-	Password string `gorm:"not null" json:"-"`
+	ID        uint           `gorm:"primaryKey" json:"id"`
+	CreatedAt time.Time      `json:"-"`
+	UpdatedAt time.Time      `json:"-"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	Username  string         `gorm:"uniqueIndex;not null" json:"username"`
+	Name      string         `gorm:"not null" json:"name"`
+	Password  string         `gorm:"not null" json:"-"`
 }

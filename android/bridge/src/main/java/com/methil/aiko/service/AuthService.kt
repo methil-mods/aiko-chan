@@ -13,6 +13,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
+import android.util.Log
 
 @Serializable
 private data class ErrorResponse(val error: String)
@@ -32,6 +33,7 @@ class AuthService(private val baseUrl: String) {
                 "Erreur serveur: ${response.code}"
             }
         } catch (e: Exception) {
+            Log.e("AuthService", "Error parsing error response", e)
             "Erreur serveur: ${response.code}"
         }
     }
@@ -66,6 +68,7 @@ class AuthService(private val baseUrl: String) {
                     }
                 }
             } catch (e: IOException) {
+                Log.e("AuthService", "Register network error", e)
                 Result.failure(e)
             }
         }
@@ -91,6 +94,7 @@ class AuthService(private val baseUrl: String) {
                     }
                 }
             } catch (e: Exception) {
+                Log.e("AuthService", "Network or parsing error", e)
                 Result.failure(e)
             }
         }
@@ -116,6 +120,7 @@ class AuthService(private val baseUrl: String) {
                     }
                 }
             } catch (e: Exception) {
+                Log.e("AuthService", "Network or parsing error", e)
                 Result.failure(e)
             }
         }

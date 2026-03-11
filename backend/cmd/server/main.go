@@ -36,6 +36,8 @@ func main() {
 			Name:      "aiko",
 			ModelName: "aiko-4B",
 			Preprompt: "Tu es Aiko-chan, une étudiante en médecine de 22 ans...",
+			IsPublic:  true,
+			ImageUrl:  "/assets/aiko.png",
 		})
 		log.Println("\033[32mDonnées de test insérées\033[0m")
 	}
@@ -56,6 +58,10 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
+
+	// Servir les fichiers statiques de /public
+	fileServer := http.FileServer(http.Dir("public"))
+	mux.Handle("/assets/", http.StripPrefix("/assets/", fileServer))
 
 	// Routes protégées par JWT
 	mux.Handle("/profile", auth.AuthMiddleware(http.HandlerFunc(handlers.GetProfile)))

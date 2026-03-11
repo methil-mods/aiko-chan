@@ -33,6 +33,7 @@ import com.methil.aiko.service.AuthService
 import com.methil.aiko.bridge.AikoConfig
 import com.methil.aiko.data.TokenManager
 import kotlinx.coroutines.launch
+import android.util.Log
 
 @Composable
 fun AuthScreen(
@@ -163,6 +164,7 @@ fun AuthScreen(
                                         tokenManager.saveToken(it.token)
                                         onAuthSuccess(it.token)
                                     }.onFailure {
+                                        Log.e("AuthScreen", "Login failed", it)
                                         errorMessage = "Login failed: ${it.message}"
                                     }
                                 } else {
@@ -173,9 +175,11 @@ fun AuthScreen(
                                             tokenManager.saveToken(authRes.token)
                                             onAuthSuccess(authRes.token)
                                         }.onFailure { loginErr ->
+                                            Log.e("AuthScreen", "Login after registration failed", loginErr)
                                             errorMessage = "Login failed: ${loginErr.message}"
                                         }
                                     }.onFailure {
+                                        Log.e("AuthScreen", "Registration failed", it)
                                         errorMessage = "Registration failed: ${it.message}"
                                     }
                                 }

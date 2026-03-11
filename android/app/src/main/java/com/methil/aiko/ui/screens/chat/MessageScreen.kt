@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,7 +45,8 @@ import androidx.compose.material.icons.filled.Star
 @Composable
 fun MessageScreen(
     sessionToken: String = "",
-    viewModel: MessageViewModel = viewModel()
+    viewModel: MessageViewModel = viewModel(),
+    onBack: () -> Unit = {}
 ) {
     LaunchedEffect(sessionToken) {
         viewModel.setSessionToken(sessionToken)
@@ -120,6 +122,33 @@ fun MessageScreen(
                             "http://localhost:3845/assets/7c85398c646e1d8c43dece198ea8c2f864130d4f.svg"
                         ) // spark_fill
                     }
+                }
+            }
+
+            // Header with Back Button
+            Surface(
+                modifier = Modifier.fillMaxWidth().height(60.dp),
+                color = DarkPurple.copy(alpha = 0.8f)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.kb_erase), // Use erase icon as back for now
+                            contentDescription = "Back",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Aiko Chat", // Hardcoded for now, could be dynamic
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 

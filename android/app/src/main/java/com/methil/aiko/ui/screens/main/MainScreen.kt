@@ -18,7 +18,10 @@ import androidx.navigation.compose.rememberNavController
 import com.methil.aiko.ui.navigation.AikoScreen
 
 @Composable
-fun MainScreen(sessionToken: String) {
+fun MainScreen(
+    sessionToken: String,
+    onCharacterSelect: (com.methil.aiko.domain.Character) -> Unit = {}
+) {
     val navController = rememberNavController()
     
     Scaffold(
@@ -52,7 +55,10 @@ fun MainScreen(sessionToken: String) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(AikoScreen.Characters.route) {
-                CharactersScreen(sessionToken = sessionToken)
+                CharactersScreen(
+                    sessionToken = sessionToken,
+                    onCharacterSelect = onCharacterSelect
+                )
             }
             composable(AikoScreen.Profile.route) {
                 ProfileScreen(sessionToken = sessionToken)

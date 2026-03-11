@@ -14,5 +14,7 @@ data class Character(
     val id: Long,
     val name: String,
     val model_name: String,
-    val preprompt: String
+    val preprompt: String,
+    val is_public: Boolean = false,
+    val image_url: String? = null
 )

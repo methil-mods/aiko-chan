@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import android.util.Log
 import com.methil.aiko.bridge.AikoConfig
 import com.methil.aiko.service.AuthService
 import com.methil.aiko.domain.UserProfile
@@ -30,6 +31,7 @@ fun ProfileScreen(sessionToken: String) {
             profile = it
             isLoading = false
         }.onFailure {
+            Log.e("ProfileScreen", "Failed to fetch profile", it)
             errorMessage = it.message
             isLoading = false
         }

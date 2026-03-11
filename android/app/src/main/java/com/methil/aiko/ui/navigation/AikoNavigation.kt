@@ -57,7 +57,14 @@ fun AikoNavigation(modifier: Modifier = Modifier) {
             )
         ) { backStackEntry ->
             val token = backStackEntry.arguments?.getString("token") ?: ""
-            MainScreen(sessionToken = token)
+            MainScreen(
+                sessionToken = token,
+                onCharacterSelect = { character ->
+                    // For now we just go to /message/{token}, but we should probably pass the character ID too
+                    // Let's keep it simple as requested: "afficher la page de chat mais avec elle"
+                    navController.navigate("message/$token")
+                }
+            )
         }
         composable(
             "message/{token}",
@@ -66,7 +73,10 @@ fun AikoNavigation(modifier: Modifier = Modifier) {
             )
         ) { backStackEntry ->
             val token = backStackEntry.arguments?.getString("token") ?: ""
-            MessageScreen(sessionToken = token)
+            MessageScreen(
+                sessionToken = token,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
