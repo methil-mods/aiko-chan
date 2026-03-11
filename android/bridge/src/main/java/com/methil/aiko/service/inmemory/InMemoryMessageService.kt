@@ -65,10 +65,6 @@ internal class InMemoryMessageService : MessageService {
 
     private var userName: String = "Utilisateur"
 
-    override fun setUserName(name: String) {
-        this.userName = name
-    }
-
     override fun getMessages(): List<Message> = messages.toList()
 
     override fun addMessage(message: Message) {

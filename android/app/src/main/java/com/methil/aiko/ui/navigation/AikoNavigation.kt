@@ -35,29 +35,19 @@ fun AikoNavigation(modifier: Modifier = Modifier) {
         }
         composable("auth") {
             AuthScreen(onAuthSuccess = { token ->
-                navController.navigate("name_input/$token") {
+                navController.navigate("message/$token") {
                     popUpTo("auth") { inclusive = true }
                 }
             })
         }
-        composable("name_input/{token}") { backStackEntry ->
-            val token = backStackEntry.arguments?.getString("token") ?: ""
-            com.methil.aiko.ui.screens.NameInputScreen(onNameSubmitted = { name ->
-                navController.navigate("message/$name/$token") {
-                    popUpTo("name_input") { inclusive = true }
-                }
-            })
-        }
         composable(
-            "message/{userName}/{token}",
+            "message/{token}",
             arguments = listOf(
-                androidx.navigation.navArgument("userName") { type = androidx.navigation.NavType.StringType },
                 androidx.navigation.navArgument("token") { type = androidx.navigation.NavType.StringType }
             )
         ) { backStackEntry ->
-            val userName = backStackEntry.arguments?.getString("userName") ?: "Utilisateur"
             val token = backStackEntry.arguments?.getString("token") ?: ""
-            MessageScreen(userName = userName, sessionToken = token)
+            MessageScreen(sessionToken = token)
         }
     }
 }
