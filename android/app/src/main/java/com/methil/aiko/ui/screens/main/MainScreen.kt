@@ -1,14 +1,14 @@
 package com.methil.aiko.ui.screens.main
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -39,16 +39,33 @@ fun MainScreen(
                 val currentDestination = navBackStackEntry?.destination
                 
                 AikoScreen.items.forEach { screen ->
+                    val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
                     NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = null) },
+                        icon = {
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 64.dp, height = 32.dp)
+                                    .background(
+                                        if (selected) LightestPink else Color.Transparent,
+                                        RectangleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    screen.icon, 
+                                    contentDescription = null,
+                                    tint = if (selected) DarkPurple else LightestPink.copy(alpha = 0.6f)
+                                )
+                            }
+                        },
                         label = { Text(screen.title, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        selected = selected,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = DarkPurple,
                             selectedTextColor = LightestPink,
                             unselectedIconColor = LightestPink.copy(alpha = 0.6f),
                             unselectedTextColor = LightestPink.copy(alpha = 0.6f),
-                            indicatorColor = LightestPink
+                            indicatorColor = Color.Transparent // Hide the default round indicator
                         ),
                         onClick = {
                             navController.navigate(screen.route) {

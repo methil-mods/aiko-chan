@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,6 +19,20 @@ import com.methil.aiko.service.AuthService
 import com.methil.aiko.domain.Character
 import coil.compose.AsyncImage
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.methil.aiko.R
+import com.methil.aiko.ui.theme.DarkPurple
+import com.methil.aiko.ui.theme.LightViolet
+import com.methil.aiko.ui.theme.LightestPink
 
 @Composable
 fun CharactersScreen(
@@ -42,25 +57,59 @@ fun CharactersScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LightViolet),
         contentAlignment = Alignment.Center
     ) {
+        // Pixel Background
+        Image(
+            painter = painterResource(id = R.drawable.chat_bg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds
+        )
+
         if (isLoading) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(color = DarkPurple)
         } else if (errorMessage != null) {
-            Text(text = "Error: $errorMessage", color = MaterialTheme.colorScheme.error)
+            Text(
+                text = "Error: $errorMessage", 
+                color = MaterialTheme.colorScheme.error,
+                fontFamily = FontFamily.Monospace
+            )
         } else if (characters.isEmpty()) {
-            Text(text = "No characters found.")
+            Text(
+                text = "No characters found.",
+                fontFamily = FontFamily.Monospace,
+                color = DarkPurple
+            )
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding = PaddingValues(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                item {
+                    Text(
+                        text = "CHARACTERS",
+                        style = androidx.compose.ui.text.TextStyle(
+                            color = Color.White,
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontFamily = FontFamily.Monospace
+                        ),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
+                
                 items(characters) { character ->
-                    Card(
+                    // Square Character Card
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .background(Color.White)
+                            .border(3.dp, DarkPurple, RectangleShape)
                             .clickable { onCharacterSelect(character) }
                     ) {
                         Row(
@@ -68,33 +117,69 @@ fun CharactersScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             if (character.image_url != null) {
-                                AsyncImage(
-                                    model = "${AikoConfig.BASE_URL}${character.image_url}",
-                                    contentDescription = character.name,
+                                Box(
                                     modifier = Modifier
-                                        .size(60.dp)
-                                        .padding(end = 16.dp)
-                                )
+                                        .size(64.dp)
+                                        .background(Color.Black)
+                                        .border(2.dp, DarkPurple, RectangleShape)
+                                ) {
+                                    AsyncImage(
+                                        model = "${AikoConfig.BASE_URL}${character.image_url}",
+                                        contentDescription = character.name,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
                             }
+                            
+                            Spacer(modifier = Modifier.width(16.dp))
+                            
                             Column(modifier = Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = character.name, style = MaterialTheme.typography.titleLarge)
+                                    Text(
+                                        text = character.name.uppercase(),
+                                        style = androidx.compose.ui.text.TextStyle(
+                                            color = DarkPurple,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            fontFamily = FontFamily.Monospace
+                                        )
+                                    )
                                     if (character.is_public) {
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Surface(
-                                            color = MaterialTheme.colorScheme.primaryContainer,
-                                            shape = MaterialTheme.shapes.extraSmall
+                                            color = DarkPurple,
+                                            shape = RectangleShape
                                         ) {
                                             Text(
                                                 text = "PUBLIC",
                                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                                                style = MaterialTheme.typography.labelSmall
+                                                style = androidx.compose.ui.text.TextStyle(
+                                                    color = Color.White,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontFamily = FontFamily.Monospace
+                                                )
                                             )
                                         }
                                     }
                                 }
-                                Text(text = character.model_name, style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    text = character.model_name,
+                                    style = androidx.compose.ui.text.TextStyle(
+                                        color = DarkPurple.copy(alpha = 0.6f),
+                                        fontSize = 14.sp,
+                                        fontFamily = FontFamily.Monospace
+                                    )
+                                )
                             }
+                            
+                            Icon(
+                                painter = painterResource(id = R.drawable.send_ico), // Using send icon as a chevron for now
+                                contentDescription = null,
+                                tint = DarkPurple,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                     }
                 }
