@@ -1,4 +1,4 @@
-package com.methil.aiko.ui.screens
+package com.methil.aiko.ui.screens.auth
 
 import android.widget.ImageView
 import androidx.compose.animation.core.*

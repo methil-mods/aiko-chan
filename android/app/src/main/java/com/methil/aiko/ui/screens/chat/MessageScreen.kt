@@ -1,4 +1,4 @@
-package com.methil.aiko.ui.screens
+package com.methil.aiko.ui.screens.chat
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image

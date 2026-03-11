@@ -5,10 +5,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.methil.aiko.ui.screens.AuthScreen
-import com.methil.aiko.ui.screens.MessageScreen
-import com.methil.aiko.ui.screens.OnboardingScreen
-import com.methil.aiko.ui.screens.SplashScreen
+import com.methil.aiko.ui.screens.auth.AuthScreen
+import com.methil.aiko.ui.screens.main.MainScreen
+import com.methil.aiko.ui.screens.chat.MessageScreen
+import com.methil.aiko.ui.screens.auth.OnboardingScreen
+import com.methil.aiko.ui.screens.auth.SplashScreen
 
 @Composable
 fun AikoNavigation(modifier: Modifier = Modifier) {
@@ -35,10 +36,19 @@ fun AikoNavigation(modifier: Modifier = Modifier) {
         }
         composable("auth") {
             AuthScreen(onAuthSuccess = { token ->
-                navController.navigate("message/$token") {
+                navController.navigate("main/$token") {
                     popUpTo("auth") { inclusive = true }
                 }
             })
+        }
+        composable(
+            "main/{token}",
+            arguments = listOf(
+                androidx.navigation.navArgument("token") { type = androidx.navigation.NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            MainScreen(sessionToken = token)
         }
         composable(
             "message/{token}",

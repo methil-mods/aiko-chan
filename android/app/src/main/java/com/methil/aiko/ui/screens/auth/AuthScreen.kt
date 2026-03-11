@@ -1,4 +1,4 @@
-package com.methil.aiko.ui.screens
+package com.methil.aiko.ui.screens.auth
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background

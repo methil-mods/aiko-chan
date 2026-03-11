@@ -28,8 +28,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
 
-        val aikoKey = localProperties.getProperty("AIKO_API_KEY") ?: ""
-        buildConfigField("String", "AIKO_API_KEY", "\"$aikoKey\"")
+        // Removed AIKO_API_KEY as it's no longer used (handled by Go backend)
     }
 
     buildTypes {
