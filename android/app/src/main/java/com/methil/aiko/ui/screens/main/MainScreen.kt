@@ -24,7 +24,8 @@ import com.methil.aiko.ui.theme.LightestPink
 @Composable
 fun MainScreen(
     sessionToken: String,
-    onCharacterSelect: (com.methil.aiko.domain.Character) -> Unit = {}
+    onCharacterSelect: (com.methil.aiko.domain.Character) -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     
@@ -93,7 +94,10 @@ fun MainScreen(
                 )
             }
             composable(AikoScreen.Profile.route) {
-                ProfileScreen(sessionToken = sessionToken)
+                ProfileScreen(
+                    sessionToken = sessionToken,
+                    onLogout = onLogout
+                )
             }
             composable(AikoScreen.Settings.route) {
                 SettingsScreen()

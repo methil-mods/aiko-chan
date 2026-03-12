@@ -32,7 +32,10 @@ import com.methil.aiko.ui.theme.*
 import kotlinx.coroutines.launch
 
 @Composable
-fun ProfileScreen(sessionToken: String) {
+fun ProfileScreen(
+    sessionToken: String,
+    onLogout: () -> Unit = {}
+) {
     var profile by remember { mutableStateOf<UserProfile?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -207,6 +210,27 @@ fun ProfileScreen(sessionToken: String) {
                             Spacer(modifier = Modifier.height(24.dp))
                             
                             SquareButton(text = "EDIT PROFILE", onClick = { isEditing = true })
+                            
+                            Spacer(modifier = Modifier.height(12.dp))
+                            
+                            // Logout Button
+                            Button(
+                                onClick = onLogout,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RectangleShape,
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE91E63)), // Pinkish red
+                                border = BorderStroke(2.dp, Color.Black)
+                            ) {
+                                Text(
+                                    text = "LOGOUT",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                )
+                            }
                         }
                     }
                 }

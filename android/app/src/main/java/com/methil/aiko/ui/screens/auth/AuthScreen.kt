@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.animation.core.*
 import com.methil.aiko.R
 import com.methil.aiko.ui.components.AikoCustomKeyboard
@@ -71,196 +73,204 @@ fun AuthScreen(
         label = "CursorAlpha"
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(LightViolet)
-    ) {
-        // Chat Background
-        Image(
-            painter = painterResource(id = R.drawable.chat_bg),
-            contentDescription = "background",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
-        )
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = LightViolet
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .imePadding() // Avoid system IME if any, though we use custom
+        ) {
+            // Chat Background
+            Image(
+                painter = painterResource(id = R.drawable.chat_bg),
+                contentDescription = "background",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds
+            )
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            XpWindow(
-                title = if (isLogin) "ログイン - Login" else "登録 - Register",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 24.dp)
-                    .align(Alignment.Center)
-                    .offset(y = (-100).dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+            Box(modifier = Modifier.fillMaxSize()) {
+                XpWindow(
+                    title = if (isLogin) "ログイン - Login" else "登録 - Register",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 24.dp)
+                        .align(Alignment.Center)
+                        .offset(y = (-20).dp)
                 ) {
-                    Text(
-                        text = if (isLogin) "Bon retour !" else "Bienvenue !",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = DarkPurple
-                    )
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = if (isLogin) "Bon retour !" else "Bienvenue !",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DarkPurple
+                        )
 
-                    // Input Fields
-                    AuthInputField(
-                        label = "Username",
-                        value = username,
-                        isActive = activeField == 0 && isKeyboardOpen,
-                        cursorAlpha = cursorAlpha,
-                        isRequired = true,
-                        onClick = { 
-                            activeField = 0
-                            isKeyboardOpen = true
-                        }
-                    )
-
-                    if (!isLogin) {
+                        // Input Fields
                         AuthInputField(
-                            label = "Nom / Pseudo",
-                            value = name,
-                            isActive = activeField == 2 && isKeyboardOpen,
+                            label = "Username",
+                            value = username,
+                            isActive = activeField == 0 && isKeyboardOpen,
                             cursorAlpha = cursorAlpha,
                             isRequired = true,
                             onClick = { 
-                                activeField = 2
+                                activeField = 0
                                 isKeyboardOpen = true
                             }
                         )
-                    }
 
-                    AuthInputField(
-                        label = "Password",
-                        value = password,
-                        isActive = activeField == 1 && isKeyboardOpen,
-                        cursorAlpha = cursorAlpha,
-                        isPassword = true,
-                        isRequired = true,
-                        onClick = { 
-                            activeField = 1
-                            isKeyboardOpen = true
-                        }
-                    )
-
-                    if (errorMessage != null) {
-                        Text(
-                            text = errorMessage!!,
-                            color = Color.Red,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Action Button
-                    Button(
-                        onClick = {
-                            if (username.isBlank() || password.isBlank()) return@Button
-                            if (password.length < 8) {
-                                errorMessage = "Le mot de passe doit faire au moins 8 caractères"
-                                return@Button
-                            }
-                            isLoading = true
-                            errorMessage = null
-                            scope.launch {
-                                if (isLogin) {
-                                    val result = authService.login(LoginRequest(username, password))
-                                    result.onSuccess {
-                                        tokenManager.saveToken(it.token)
-                                        onAuthSuccess(it.token)
-                                    }.onFailure {
-                                        Log.e("AuthScreen", "Login failed", it)
-                                        errorMessage = "Login failed: ${it.message}"
-                                    }
-                                } else {
-                                    val result = authService.register(RegisterRequest(username, name, password))
-                                    result.onSuccess {
-                                        val loginResult = authService.login(LoginRequest(username, password))
-                                        loginResult.onSuccess { authRes ->
-                                            tokenManager.saveToken(authRes.token)
-                                            onAuthSuccess(authRes.token)
-                                        }.onFailure { loginErr ->
-                                            Log.e("AuthScreen", "Login after registration failed", loginErr)
-                                            errorMessage = "Login failed: ${loginErr.message}"
-                                        }
-                                    }.onFailure {
-                                        Log.e("AuthScreen", "Registration failed", it)
-                                        errorMessage = "Registration failed: ${it.message}"
-                                    }
+                        if (!isLogin) {
+                            AuthInputField(
+                                label = "Nom / Pseudo",
+                                value = name,
+                                isActive = activeField == 2 && isKeyboardOpen,
+                                cursorAlpha = cursorAlpha,
+                                isRequired = true,
+                                onClick = { 
+                                    activeField = 2
+                                    isKeyboardOpen = true
                                 }
-                                isLoading = false
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        enabled = !isLoading && username.isNotBlank() && password.isNotBlank() && (isLogin || name.isNotBlank()),
-                        colors = ButtonDefaults.buttonColors(containerColor = LightestPink),
-                        shape = RectangleShape,
-                        border = BorderStroke(2.dp, DarkPurple)
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = DarkPurple)
-                        } else {
-                            Text(
-                                text = if (isLogin) "Se connecter" else "S'enregistrer",
-                                color = DarkPurple,
-                                fontWeight = FontWeight.Bold
                             )
                         }
-                    }
 
-                    Text(
-                        text = if (isLogin) "Pas de compte ? S'enregistrer" else "Déjà un compte ? Se connecter",
-                        modifier = Modifier.clickable { 
-                            isLogin = !isLogin
-                            errorMessage = null
-                        },
-                        fontSize = 14.sp,
-                        color = DarkPurple.copy(alpha = 0.7f)
-                    )
-                }
-            }
+                        AuthInputField(
+                            label = "Password",
+                            value = password,
+                            isActive = activeField == 1 && isKeyboardOpen,
+                            cursorAlpha = cursorAlpha,
+                            isPassword = true,
+                            isRequired = true,
+                            onClick = { 
+                                activeField = 1
+                                isKeyboardOpen = true
+                            }
+                        )
 
-            // Keyboard
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-            ) {
-                AnimatedVisibility(
-                    visible = isKeyboardOpen,
-                    enter = slideInVertically(initialOffsetY = { it }),
-                    exit = slideOutVertically(targetOffsetY = { it })
-                ) {
-                    AikoCustomKeyboard(
-                        onKeyClick = { key ->
-                            when (activeField) {
-                                0 -> username += key
-                                1 -> password += key
-                                2 -> name += key
-                            }
-                        },
-                        onDelete = {
-                            when (activeField) {
-                                0 -> if (username.isNotEmpty()) username = username.dropLast(1)
-                                1 -> if (password.isNotEmpty()) password = password.dropLast(1)
-                                2 -> if (name.isNotEmpty()) name = name.dropLast(1)
-                            }
-                        },
-                        onEnter = {
-                            when (activeField) {
-                                0 -> activeField = if (isLogin) 1 else 2
-                                2 -> activeField = 1
-                                1 -> isKeyboardOpen = false
+                        if (errorMessage != null) {
+                            Text(
+                                text = errorMessage!!,
+                                color = Color.Red,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Action Button
+                        Button(
+                            onClick = {
+                                if (username.isBlank() || password.isBlank()) return@Button
+                                if (password.length < 8) {
+                                    errorMessage = "Le mot de passe doit faire au moins 8 caractères"
+                                    return@Button
+                                }
+                                isLoading = true
+                                errorMessage = null
+                                scope.launch {
+                                    if (isLogin) {
+                                        val result = authService.login(LoginRequest(username, password))
+                                        result.onSuccess {
+                                            tokenManager.saveToken(it.token)
+                                            onAuthSuccess(it.token)
+                                        }.onFailure {
+                                            Log.e("AuthScreen", "Login failed", it)
+                                            errorMessage = "Login failed: ${it.message}"
+                                        }
+                                    } else {
+                                        val result = authService.register(RegisterRequest(username, name, password))
+                                        result.onSuccess {
+                                            val loginResult = authService.login(LoginRequest(username, password))
+                                            loginResult.onSuccess { authRes ->
+                                                tokenManager.saveToken(authRes.token)
+                                                onAuthSuccess(authRes.token)
+                                            }.onFailure { loginErr ->
+                                                Log.e("AuthScreen", "Login after registration failed", loginErr)
+                                                errorMessage = "Login failed: ${loginErr.message}"
+                                            }
+                                        }.onFailure {
+                                            Log.e("AuthScreen", "Registration failed", it)
+                                            errorMessage = "Registration failed: ${it.message}"
+                                        }
+                                    }
+                                    isLoading = false
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            enabled = !isLoading && username.isNotBlank() && password.isNotBlank() && (isLogin || name.isNotBlank()),
+                            colors = ButtonDefaults.buttonColors(containerColor = LightestPink),
+                            shape = RectangleShape,
+                            border = BorderStroke(2.dp, DarkPurple)
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = DarkPurple)
+                            } else {
+                                Text(
+                                    text = if (isLogin) "Se connecter" else "S'enregistrer",
+                                    color = DarkPurple,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
-                    )
+
+                        Text(
+                            text = if (isLogin) "Pas de compte ? S'enregistrer" else "Déjà un compte ? Se connecter",
+                            modifier = Modifier.clickable { 
+                                isLogin = !isLogin
+                                errorMessage = null
+                            },
+                            fontSize = 14.sp,
+                            color = DarkPurple.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+
+                // Keyboard
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                ) {
+                    AnimatedVisibility(
+                        visible = isKeyboardOpen,
+                        enter = slideInVertically(initialOffsetY = { it }),
+                        exit = slideOutVertically(targetOffsetY = { it })
+                    ) {
+                        AikoCustomKeyboard(
+                            onKeyClick = { key ->
+                                when (activeField) {
+                                    0 -> username += key
+                                    1 -> password += key
+                                    2 -> name += key
+                                }
+                            },
+                            onDelete = {
+                                when (activeField) {
+                                    0 -> if (username.isNotEmpty()) username = username.dropLast(1)
+                                    1 -> if (password.isNotEmpty()) password = password.dropLast(1)
+                                    2 -> if (name.isNotEmpty()) name = name.dropLast(1)
+                                }
+                            },
+                            onEnter = {
+                                when (activeField) {
+                                    0 -> activeField = if (isLogin) 1 else 2
+                                    2 -> activeField = 1
+                                    1 -> isKeyboardOpen = false
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }

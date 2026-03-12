@@ -75,152 +75,160 @@ fun MessageScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(LightViolet)
-    ) {
-        // Chat Background
-        Image(
-            painter = painterResource(id = R.drawable.chat_bg),
-            contentDescription = "background",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
-        )
-
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Top Control Area
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(140.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Left Window: Mood/Profile
-                XpWindow(title = "感情", modifier = Modifier.weight(1f)) {
-                    Image(
-                        painter = painterResource(id = R.drawable.e_girl_emo),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.FillWidth
-                    )
-                }
-
-                // Right Window: Stats
-                XpWindow(title = "身体の状態", modifier = Modifier.weight(1.5f)) {
-                    Column(
-                        modifier = Modifier.padding(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        StatRow(
-                            "LUV",
-                            "http://localhost:3845/assets/ae3b83a6522aeef54dbf03912059a8181a1e451919.svg"
-                        ) // heart_fill
-                        StatRow(
-                            "NRG",
-                            "http://localhost:3845/assets/7c85398c646e1d8c43dece198ea8c2f864130d4f.svg"
-                        ) // spark_fill
-                    }
-                }
-            }
-
-            // Header with Back Button
-            Surface(
-                modifier = Modifier.fillMaxWidth().height(60.dp),
-                color = DarkPurple.copy(alpha = 0.8f)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.kb_erase), // Use erase icon as back for now
-                            contentDescription = "Back",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Aiko Chat", // Hardcoded for now, could be dynamic
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            // Chat Messages
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                    .drawWithContent {
-                        drawContent()
-                        drawRect(
-                            brush = Brush.verticalGradient(
-                                0f to Color.Transparent,
-                                0.1f to Color.Black
-                            ),
-                            blendMode = BlendMode.DstIn
-                        )
-                    },
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 80.dp)
-            ) {
-                items(messages) { msg ->
-                    ChatBubble(msg)
-                }
-            }
-
-            // Input Area
-            Y2kInputArea(
-                text = uiState.inputText,
-                isKeyboardOpen = uiState.isKeyboardOpen,
-                onInputClick = { viewModel.toggleKeyboard() },
-                onSend = { viewModel.sendMessage() }
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = LightViolet
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            // Chat Background
+            Image(
+                painter = painterResource(id = R.drawable.chat_bg),
+                contentDescription = "background",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds
             )
 
-            // Custom Keyboard
-            AnimatedVisibility(
-                visible = uiState.isKeyboardOpen,
-                enter = slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = tween(durationMillis = 300)
-                ),
-                exit = slideOutVertically(
-                    targetOffsetY = { it },
-                    animationSpec = tween(durationMillis = 300)
-                )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
             ) {
-                AikoCustomKeyboard(
-                    onKeyClick = { viewModel.onInputTextChanged(uiState.inputText + it) },
-                    onDelete = { 
-                        if (uiState.inputText.isNotEmpty()) {
-                            viewModel.onInputTextChanged(uiState.inputText.dropLast(1))
+                // Top Control Area
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(140.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Left Window: Mood/Profile
+                    XpWindow(title = "感情", modifier = Modifier.weight(1f)) {
+                        Image(
+                            painter = painterResource(id = R.drawable.e_girl_emo),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.FillWidth
+                        )
+                    }
+
+                    // Right Window: Stats
+                    XpWindow(title = "身体の状態", modifier = Modifier.weight(1.5f)) {
+                        Column(
+                            modifier = Modifier.padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            StatRow(
+                                "LUV",
+                                "http://localhost:3845/assets/ae3b83a6522aeef54dbf03912059a8181a1e451919.svg"
+                            ) // heart_fill
+                            StatRow(
+                                "NRG",
+                                "http://localhost:3845/assets/7c85398c646e1d8c43dece198ea8c2f864130d4f.svg"
+                            ) // spark_fill
+                        }
+                    }
+                }
+
+                // Header with Back Button
+                Surface(
+                    modifier = Modifier.fillMaxWidth().height(60.dp),
+                    color = DarkPurple.copy(alpha = 0.8f)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.kb_erase), // Use erase icon as back for now
+                                contentDescription = "Back",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Aiko Chat", // Hardcoded for now, could be dynamic
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                // Chat Messages
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                        .drawWithContent {
+                            drawContent()
+                            drawRect(
+                                brush = Brush.verticalGradient(
+                                    0f to Color.Transparent,
+                                    0.1f to Color.Black
+                                ),
+                                blendMode = BlendMode.DstIn
+                            )
+                        },
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
+                    items(messages) { msg ->
+                        ChatBubble(msg)
+                    }
+                }
+
+                // Input Area
+                Y2kInputArea(
+                    text = uiState.inputText,
+                    isKeyboardOpen = uiState.isKeyboardOpen,
+                    onInputClick = { viewModel.toggleKeyboard() },
+                    onSend = { viewModel.sendMessage() }
+                )
+
+                // Custom Keyboard
+                AnimatedVisibility(
+                    visible = uiState.isKeyboardOpen,
+                    enter = slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = tween(durationMillis = 300)
+                    ),
+                    exit = slideOutVertically(
+                        targetOffsetY = { it },
+                        animationSpec = tween(durationMillis = 300)
+                    )
+                ) {
+                    AikoCustomKeyboard(
+                        onKeyClick = { viewModel.onInputTextChanged(uiState.inputText + it) },
+                        onDelete = { 
+                            if (uiState.inputText.isNotEmpty()) {
+                                viewModel.onInputTextChanged(uiState.inputText.dropLast(1))
+                            }
+                        },
+                        onEnter = { viewModel.sendMessage() }
+                    )
+                }
+            }
+
+            // Error message overlay
+            uiState.errorMessage?.let { error ->
+                Snackbar(
+                    action = {
+                        TextButton(onClick = { viewModel.dismissError() }) {
+                            Text("Dismiss", color = Color.White)
                         }
                     },
-                    onEnter = { viewModel.sendMessage() }
-                )
-            }
-        }
-
-        // Error message overlay
-        uiState.errorMessage?.let { error ->
-            Snackbar(
-                action = {
-                    TextButton(onClick = { viewModel.dismissError() }) {
-                        Text("Dismiss", color = Color.White)
-                    }
-                },
-                modifier = Modifier.padding(16.dp).align(Alignment.BottomCenter)
-            ) {
-                Text(error)
+                    modifier = Modifier.padding(16.dp).align(Alignment.BottomCenter)
+                ) {
+                    Text(error)
+                }
             }
         }
     }
