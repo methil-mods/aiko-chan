@@ -17,4 +17,5 @@ type User struct {
 	Password  string         `gorm:"not null" json:"-"`
 	Age       int            `gorm:"default:20" json:"age"`
 	AvatarUrl string         `gorm:"default:''" json:"avatar_url"`
+	Characters []Character   `gorm:"many2many:user_characters;" json:"characters,omitempty"`
 }

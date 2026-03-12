@@ -75,6 +75,12 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Lier le personnage par défaut "aiko" à l'utilisateur
+	var aiko models.Character
+	if err := database.DB.Where("name = ?", "aiko").First(&aiko).Error; err == nil {
+		database.DB.Model(&user).Association("Characters").Append(&aiko)
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Utilisateur créé avec succès"})
 }

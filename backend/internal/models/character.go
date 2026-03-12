@@ -17,4 +17,5 @@ type Character struct {
 	Preprompt string         `gorm:"not null" json:"preprompt"`
 	IsPublic  bool           `gorm:"default:false" json:"is_public"`
 	ImageUrl  string         `json:"image_url"`
+	Users     []User         `gorm:"many2many:user_characters;" json:"-"`
 }
