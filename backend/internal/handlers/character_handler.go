@@ -73,7 +73,11 @@ func UnlockCharacter(w http.ResponseWriter, r *http.Request) {
 	for _, c := range user.Characters {
 		if c.ID == character.ID {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"message": "Personnage déjà débloqué", "character_name": character.Name})
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"message":        "Personnage déjà débloqué",
+				"character_name": character.Name,
+				"is_new":         false,
+			})
 			return
 		}
 	}
@@ -85,9 +89,10 @@ func UnlockCharacter(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message":        "Personnage débloqué avec succès !",
 		"character_name": character.Name,
 		"image_url":      character.ImageUrl,
+		"is_new":         true,
 	})
 }

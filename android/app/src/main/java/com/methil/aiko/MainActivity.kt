@@ -1,12 +1,14 @@
 package com.methil.aiko
 
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.app.PendingIntent
 import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -23,10 +25,12 @@ import com.methil.aiko.ui.navigation.AikoNavigation
 import com.methil.aiko.ui.theme.AikoTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
     private var nfcAdapter: NfcAdapter? = null
@@ -80,7 +84,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun unlockCharacter(tagId: String) {
-        val token = TokenManager(this).getToken() ?: return
+        val token = TokenManager(this).getToken()
+        if (token == null) {
+            Log.d("NFC_SCANNER", "User not logged in, skipping unlock")
+            return
+        }
         
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -95,16 +103,41 @@ class MainActivity : ComponentActivity() {
                     .build()
                 
                 val response = client.newCall(request).execute()
-                if (response.isSuccessful) {
-                    val responseBody = response.body?.string()
-                    Log.d("NFC_SCANNER", "Character unlocked successfully: $responseBody")
-                } else {
-                    val errorBody = response.body?.string()
-                    Log.e("NFC_SCANNER", "Failed to unlock character: ${response.code} $errorBody")
+                val responseBody = response.body?.string()
+                
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful && responseBody != null) {
+                        try {
+                            val json = JSONObject(responseBody)
+                            val isNew = json.optBoolean("is_new", false)
+                            val characterName = json.optString("character_name", "???")
+                            
+                            if (isNew) {
+                                showUnlockPopup(characterName)
+                            } else {
+                                Toast.makeText(this@MainActivity, "Personnage déjà débloqué : $characterName", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: Exception) {
+                            Log.e("NFC_SCANNER", "Failed to parse unlock response", e)
+                        }
+                        Log.d("NFC_SCANNER", "Character unlock request successful: $responseBody")
+                    } else if (response.code != 404) { // Ignore 404 (tag unknown)
+                        Log.e("NFC_SCANNER", "Failed to unlock character: ${response.code} $responseBody")
+                        Toast.makeText(this@MainActivity, "Erreur de déverrouillage", Toast.LENGTH_SHORT).show()
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("NFC_SCANNER", "Error unlocking character", e)
             }
         }
+    }
+
+    private fun showUnlockPopup(characterName: String) {
+        AlertDialog.Builder(this)
+            .setTitle("✨ NOUVEAU PERSONNAGE DÉBLOQUÉ ✨")
+            .setMessage("Félicitations ! Tu as débloqué $characterName. Tu peux maintenant discuter avec elle dans la liste des personnages.")
+            .setPositiveButton("Génial !") { dialog, _ -> dialog.dismiss() }
+            .setCancelable(true)
+            .show()
     }
 }
