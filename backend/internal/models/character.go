@@ -17,5 +17,6 @@ type Character struct {
 	Preprompt string         `gorm:"not null" json:"preprompt"`
 	IsPublic  bool           `gorm:"default:false" json:"is_public"`
 	ImageUrl  string         `json:"image_url"`
+	NFCTag    *string        `gorm:"index" json:"nfc_tag"`
 	Users     []User         `gorm:"many2many:user_characters;" json:"-"`
 }

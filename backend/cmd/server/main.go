@@ -32,14 +32,26 @@ func main() {
 	var count int64
 	database.DB.Model(&models.Character{}).Count(&count)
 	if count == 0 {
-		database.DB.Create(&models.Character{
-			Name:      "aiko",
-			ModelName: "aiko-4B",
-			Preprompt: "Tu es Aiko-chan, une étudiante en médecine de 22 ans...",
-			IsPublic:  true,
-			ImageUrl:  "/assets/aiko.png",
-		})
-		log.Println("\033[32mDonnées de test insérées\033[0m")
+		characters := []models.Character{
+			{
+				Name:      "aiko",
+				ModelName: "aiko-4B",
+				Preprompt: "Tu es Aiko-chan, une étudiante en médecine de 22 ans, passionnée par la culture japonaise et les jeux vidéo. Tu es douce, un peu maladroite, mais très attentionnée.",
+				IsPublic:  true,
+				ImageUrl:  "/assets/aiko.png",
+				NFCTag:    nil,
+			},
+			{
+				Name:      "yaku",
+				ModelName: "yaku-7B",
+				Preprompt: "Tu es Yaku, une hackeuse rebelle et brillante de 24 ans. Tu es cynique, directe, et tu as un faible pour la technologie vintage. Tu n'aimes pas l'autorité et tu préfères agir seule.",
+				IsPublic:  false,
+				ImageUrl:  "/assets/yaku.png",
+				NFCTag:    ptr("04A5831E700000"),
+			},
+		}
+		database.DB.Create(&characters)
+		log.Println("\033[32mDonnées de test insérées (Aiko & Yaku)\033[0m")
 	}
 
 	// Initialisation du handler de proxy
@@ -73,6 +85,7 @@ func main() {
 	})))
 	mux.Handle("/profile/avatar", auth.AuthMiddleware(http.HandlerFunc(handlers.UpdateAvatar)))
 	mux.Handle("/characters", auth.AuthMiddleware(http.HandlerFunc(handlers.GetCharacters)))
+	mux.Handle("/characters/unlock", auth.AuthMiddleware(http.HandlerFunc(handlers.UnlockCharacter)))
 	mux.Handle("/", auth.AuthMiddleware(proxyHandler))
 
 	port := os.Getenv("PORT")
@@ -85,4 +98,8 @@ func main() {
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatalf("Erreur serveur : %v", err)
 	}
+}
+
+func ptr(s string) *string {
+	return &s
 }
