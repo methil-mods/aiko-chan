@@ -5,7 +5,7 @@ import argparse
 from tqdm import tqdm
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
-from diffusers import FluxPipeline, AutoencoderKL, FluxTransformer2DModel
+from diffusers import FluxPipeline, AutoencoderKL, FluxTransformer2DModel, Flux2Transformer2DModel
 from transformers import CLIPTokenizer, CLIPTextModel, T5TokenizerFast, T5ForConditionalGeneration, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, PeftModel, prepare_model_for_kbit_training
 from torchvision import transforms
@@ -62,7 +62,13 @@ def train(config_path):
             bnb_4bit_compute_dtype=torch_dtype
         )
 
-    transformer = FluxTransformer2DModel.from_pretrained(
+    # Choose the correct model class based on config or model name
+    model_class = FluxTransformer2DModel
+    if "FLUX.2" in config['model']['name'] or config['model'].get('variant') == "4b":
+        print("Detected Flux 2 architecture, using Flux2Transformer2DModel...")
+        model_class = Flux2Transformer2DModel
+
+    transformer = model_class.from_pretrained(
         config['model']['name'], 
         subfolder="transformer", 
         torch_dtype=torch_dtype,

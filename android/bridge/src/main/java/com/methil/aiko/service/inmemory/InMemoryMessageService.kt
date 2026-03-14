@@ -45,6 +45,13 @@ data class OpenAiChoice(val delta: OpenAiDelta)
 @Serializable
 data class OpenAiStreamResponse(val choices: List<OpenAiChoice>)
 
+@Serializable
+data class BackendMessage(
+    val Content: String,
+    val Role: String,
+    val CharacterID: Int
+)
+
 internal class InMemoryMessageService : MessageService {
     private val baseUrl = AikoConfig.BASE_URL
     private val defaultModel = AikoConfig.DEFAULT_MODEL
@@ -161,6 +168,35 @@ internal class InMemoryMessageService : MessageService {
             awaitClose {
                 eventSource.cancel()
             }
+        }
+    override suspend fun fetchHistory(characterId: Int, jwtToken: String): List<Message> {
+        val url = "$baseUrl/messages?character_id=$characterId"
+        val request = Request.Builder()
+            .url(url)
+            .get()
+            .header("Authorization", "Bearer $jwtToken")
+            .build()
+
+        return try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return emptyList()
+                val body = response.body?.string() ?: return emptyList()
+                val backendMessages = json.decodeFromString<List<BackendMessage>>(body)
+                
+                // Convert to domain messages
+                val domainMessages = backendMessages.map { 
+                    Message(it.Content, it.Role == "assistant")
+                }
+                
+                // Update local list
+                messages.clear()
+                messages.addAll(domainMessages)
+                
+                domainMessages
+            }
+        } catch (e: Exception) {
+            Log.e("AikoHistory", "Failed to fetch history: ${e.message}")
+            emptyList()
         }
     }
 }

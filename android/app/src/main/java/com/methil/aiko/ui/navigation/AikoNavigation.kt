@@ -63,9 +63,7 @@ fun AikoNavigation(modifier: Modifier = Modifier) {
             MainScreen(
                 sessionToken = token,
                 onCharacterSelect = { character ->
-                    // For now we just go to /message/{token}, but we should probably pass the character ID too
-                    // Let's keep it simple as requested: "afficher la page de chat mais avec elle"
-                    navController.navigate("message/$token")
+                    navController.navigate("message/$token/${character.id}")
                 },
                 onLogout = {
                     tokenManager.clearToken()
@@ -76,14 +74,17 @@ fun AikoNavigation(modifier: Modifier = Modifier) {
             )
         }
         composable(
-            "message/{token}",
+            "message/{token}/{characterId}",
             arguments = listOf(
-                androidx.navigation.navArgument("token") { type = androidx.navigation.NavType.StringType }
+                androidx.navigation.navArgument("token") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("characterId") { type = androidx.navigation.NavType.LongType }
             )
         ) { backStackEntry ->
             val token = backStackEntry.arguments?.getString("token") ?: ""
+            val characterId = backStackEntry.arguments?.getLong("characterId") ?: 0L
             MessageScreen(
                 sessionToken = token,
+                characterId = characterId.toInt(),
                 onBack = { navController.popBackStack() }
             )
         }

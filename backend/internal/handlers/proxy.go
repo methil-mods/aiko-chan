@@ -4,6 +4,7 @@ import (
 	"backend/internal/auth"
 	"backend/internal/database"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strings"
 )
 
 // ProxyHandler gère la redirection des requêtes vers le backend Modal
@@ -45,6 +47,23 @@ func NewProxyHandler() (*ProxyHandler, error) {
 		log.Printf("[Proxy] %s %s -> %s", req.Method, req.URL.Path, target.Host)
 	}
 
+	proxy.ModifyResponse = func(resp *http.Response) error {
+		if resp.StatusCode == http.StatusOK && (resp.Request.URL.Path == "/chat/completions" || resp.Request.URL.Path == "/") {
+			// On récupère les infos stockées dans le contexte (UserID et CharacterID)
+			userID, _ := resp.Request.Context().Value("userID").(uint)
+			characterID, _ := resp.Request.Context().Value("characterID").(uint)
+
+			if userID != 0 && characterID != 0 {
+				resp.Body = &captureReadCloser{
+					ReadCloser:  resp.Body,
+					userID:      userID,
+					characterID: characterID,
+				}
+			}
+		}
+		return nil
+	}
+
 	return &ProxyHandler{
 		Proxy:  proxy,
 		Target: target,
@@ -60,13 +79,6 @@ func (h *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Pour simplifier, on décode le JSON pour obtenir le model_name
-		// Note: Dans une application réelle, on pourrait vouloir Bufferiser le body 
-		// pour que le proxy puisse le relire, ou passer le character_id dans l'URL.
-		// Ici, on va vérifier si l'utilisateur possède AU MOINS un personnage 
-		// dont le model_name correspond à celui demandé.
-
-		// Lecture du body pour inspection
 		var body map[string]interface{}
 		if r.Body != nil {
 			err := json.NewDecoder(r.Body).Decode(&body)
@@ -82,23 +94,86 @@ func (h *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		requestedModel, _ := body["model"].(string)
 		if requestedModel == "" {
-			// Si pas de modèle spécifié, on laisse passer ou on bloque selon la politique
 			h.Proxy.ServeHTTP(w, r)
 			return
 		}
 
-		// Vérifier si l'utilisateur possède ce modèle
-		var count int64
-		database.DB.Table("user_characters").
-			Joins("JOIN characters ON characters.id = user_characters.character_id").
+		// Vérifier si l'utilisateur possède ce modèle et récupérer le CharacterID
+		var character struct {
+			ID uint
+		}
+		err := database.DB.Table("characters").
+			Select("characters.id").
+			Joins("JOIN user_characters ON user_characters.character_id = characters.id").
 			Where("user_characters.user_id = ? AND characters.model_name = ?", claims.UserID, requestedModel).
-			Count(&count)
+			First(&character).Error
 
-		if count == 0 {
+		if err != nil {
 			sendError(w, "Vous ne possédez pas ce personnage", http.StatusForbidden)
 			return
 		}
+
+		// Sauvegarder le message de l'utilisateur
+		messages, ok := body["messages"].([]interface{})
+		if ok && len(messages) > 0 {
+			lastMsg, ok := messages[len(messages)-1].(map[string]interface{})
+			if ok && lastMsg["role"] == "user" {
+				content, _ := lastMsg["content"].(string)
+				if content != "" {
+					SaveMessage(claims.UserID, character.ID, content, "user")
+				}
+			}
+		}
+
+		// Passer l'ID au contexte pour ModifyResponse
+		importCtx := r.Context()
+		importCtx = context.WithValue(importCtx, "userID", claims.UserID)
+		importCtx = context.WithValue(importCtx, "characterID", character.ID)
+		r = r.WithContext(importCtx)
 	}
 
 	h.Proxy.ServeHTTP(w, r)
+}
+
+type captureReadCloser struct {
+	io.ReadCloser
+	userID      uint
+	characterID uint
+	buffer      bytes.Buffer
+}
+
+func (c *captureReadCloser) Read(p []byte) (n int, err error) {
+	n, err = c.ReadCloser.Read(p)
+	if n > 0 {
+		c.buffer.Write(p[:n])
+	}
+	if err == io.EOF {
+		// Analyser le buffer pour extraire le texte de l'assistant (format OpenAI SSE)
+		fullText := ""
+		lines := strings.Split(c.buffer.String(), "\n")
+		for _, line := range lines {
+			if strings.HasPrefix(line, "data: ") {
+				data := strings.TrimPrefix(line, "data: ")
+				if data == "[DONE]" {
+					continue
+				}
+				var chunk struct {
+					Choices []struct {
+						Delta struct {
+							Content string `json:"content"`
+						} `json:"delta"`
+					} `json:"choices"`
+				}
+				if err := json.Unmarshal([]byte(data), &chunk); err == nil {
+					if len(chunk.Choices) > 0 {
+						fullText += chunk.Choices[0].Delta.Content
+					}
+				}
+			}
+		}
+		if fullText != "" {
+			SaveMessage(c.userID, c.characterID, fullText, "assistant")
+		}
+	}
+	return n, err
 }

@@ -45,11 +45,12 @@ import androidx.compose.material.icons.filled.Star
 @Composable
 fun MessageScreen(
     sessionToken: String = "",
+    characterId: Int = 0,
     viewModel: MessageViewModel = viewModel(),
     onBack: () -> Unit = {}
 ) {
-    LaunchedEffect(sessionToken) {
-        viewModel.setSessionToken(sessionToken)
+    LaunchedEffect(sessionToken, characterId) {
+        viewModel.init(sessionToken, characterId)
     }
 
     val uiState by viewModel.uiState.collectAsState()

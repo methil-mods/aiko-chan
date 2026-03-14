@@ -19,4 +19,8 @@ class MessageRepository {
     fun streamChat(message: String, jwtToken: String): Flow<TokenResponse> {
         return messageService.streamChat(message, jwtToken)
     }
+
+    suspend fun fetchHistory(characterId: Int, jwtToken: String): List<Message> {
+        return messageService.fetchHistory(characterId, jwtToken)
+    }
 }

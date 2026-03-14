@@ -23,7 +23,7 @@ quantization:
 lora:
   rank: 16 # High rank to capture weird textures and fine pixel details
   alpha: 16
-  target_modules: ["to_q", "to_k", "to_v", "to_out.0"] # Standard Flux attention layers
+  target_modules: ["to_qkv_mlp_proj", "to_out", "linear_in", "linear_out"] 
 
 dataset:
   path: "dataset/data/augmented" # Using the output from the augmentation toolkit

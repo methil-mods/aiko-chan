@@ -35,25 +35,24 @@ class MessageViewModel : ViewModel() {
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
     private var sessionToken: String? = null
+    private var characterId: Int = 0
 
-    fun setSessionToken(token: String) {
+    fun init(token: String, charId: Int) {
         this.sessionToken = token
+        this.characterId = charId
+        loadHistory()
     }
 
-    init {
-        loadMessages()
-    }
-
-    private fun loadMessages() {
-        val savedMessages = repository.getMessages().map { 
-            MessageUI(it.text, it.isAiko)
-        }
-        if (savedMessages.isEmpty()) {
-            _uiState.update { it.copy(messages = listOf(
-                MessageUI("Ici est votre conversation avec aiko", isAiko = false, isSystem = true)
-            )) }
-        } else {
-            _uiState.update { it.copy(messages = savedMessages) }
+    private fun loadHistory() {
+        viewModelScope.launch {
+            val history = repository.fetchHistory(characterId, sessionToken ?: "")
+            if (history.isEmpty()) {
+                _uiState.update { it.copy(messages = listOf(
+                    MessageUI("Ici est votre conversation avec aiko", isAiko = false, isSystem = true)
+                )) }
+            } else {
+                _uiState.update { it.copy(messages = history.map { MessageUI(it.text, it.isAiko) }) }
+            }
         }
     }
 

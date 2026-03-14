@@ -22,7 +22,7 @@ func main() {
 	database.InitDB()
 	
 	// Migrations automatiques
-	err := database.DB.AutoMigrate(&models.User{}, &models.Character{})
+	err := database.DB.AutoMigrate(&models.User{}, &models.Character{}, &models.Message{})
 	if err != nil {
 		log.Fatalf("Échec de la migration : %v", err)
 	}
@@ -85,6 +85,7 @@ func main() {
 	})))
 	mux.Handle("/profile/avatar", auth.AuthMiddleware(http.HandlerFunc(handlers.UpdateAvatar)))
 	mux.Handle("/characters", auth.AuthMiddleware(http.HandlerFunc(handlers.GetCharacters)))
+	mux.Handle("/messages", auth.AuthMiddleware(http.HandlerFunc(handlers.GetChatHistory)))
 	mux.Handle("/characters/unlock", auth.AuthMiddleware(http.HandlerFunc(handlers.UnlockCharacter)))
 	mux.Handle("/", auth.AuthMiddleware(proxyHandler))
 
