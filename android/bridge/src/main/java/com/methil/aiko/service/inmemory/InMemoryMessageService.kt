@@ -198,5 +198,23 @@ internal class InMemoryMessageService : MessageService {
             Log.e("AikoHistory", "Failed to fetch history: ${e.message}")
             emptyList()
         }
+    override suspend fun fetchCharacter(characterId: Int, jwtToken: String): Character? {
+        val url = "$baseUrl/character?id=$characterId"
+        val request = Request.Builder()
+            .url(url)
+            .get()
+            .header("Authorization", "Bearer $jwtToken")
+            .build()
+
+        return try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return null
+                val body = response.body?.string() ?: return null
+                json.decodeFromString<Character>(body)
+            }
+        } catch (e: Exception) {
+            Log.e("AikoCharacter", "Failed to fetch character: ${e.message}")
+            null
+        }
     }
 }

@@ -23,4 +23,8 @@ class MessageRepository {
     suspend fun fetchHistory(characterId: Int, jwtToken: String): List<Message> {
         return messageService.fetchHistory(characterId, jwtToken)
     }
+
+    suspend fun fetchCharacter(characterId: Int, jwtToken: String): com.methil.aiko.domain.Character? {
+        return messageService.fetchCharacter(characterId, jwtToken)
+    }
 }

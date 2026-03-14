@@ -9,4 +9,5 @@ interface MessageService {
     fun addMessage(message: Message)
     fun streamChat(message: String, jwtToken: String): Flow<TokenResponse>
     suspend fun fetchHistory(characterId: Int, jwtToken: String): List<Message>
+    suspend fun fetchCharacter(characterId: Int, jwtToken: String): Character?
 }

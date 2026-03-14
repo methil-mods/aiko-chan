@@ -20,11 +20,9 @@ data class MessageUI(
 )
 
 data class ChatUiState(
-    val messages: List<MessageUI> = emptyList(),
-    val inputText: String = "",
-    val isKeyboardOpen: Boolean = false,
     val currentStats: TokenResponse? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val characterName: String = "Chat" // Default to generic "Chat"
 )
 
 class MessageViewModel : ViewModel() {
@@ -41,6 +39,16 @@ class MessageViewModel : ViewModel() {
         this.sessionToken = token
         this.characterId = charId
         loadHistory()
+        fetchCharacterInfo()
+    }
+
+    private fun fetchCharacterInfo() {
+        viewModelScope.launch {
+            val character = repository.fetchCharacter(characterId, sessionToken ?: "")
+            character?.let { char ->
+                _uiState.update { it.copy(characterName = char.name) }
+            }
+        }
     }
 
     private fun loadHistory() {

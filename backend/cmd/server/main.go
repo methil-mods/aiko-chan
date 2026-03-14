@@ -86,6 +86,7 @@ func main() {
 	mux.Handle("/profile/avatar", auth.AuthMiddleware(http.HandlerFunc(handlers.UpdateAvatar)))
 	mux.Handle("/characters", auth.AuthMiddleware(http.HandlerFunc(handlers.GetCharacters)))
 	mux.Handle("/messages", auth.AuthMiddleware(http.HandlerFunc(handlers.GetChatHistory)))
+	mux.Handle("/character", auth.AuthMiddleware(http.HandlerFunc(handlers.GetCharacter)))
 	mux.Handle("/characters/unlock", auth.AuthMiddleware(http.HandlerFunc(handlers.UnlockCharacter)))
 	mux.Handle("/", auth.AuthMiddleware(proxyHandler))
 

@@ -96,3 +96,26 @@ func UnlockCharacter(w http.ResponseWriter, r *http.Request) {
 		"is_new":         true,
 	})
 }
+
+// GetCharacter retourne un personnage spécifique
+func GetCharacter(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		sendError(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+
+	characterIDStr := r.URL.Query().Get("id")
+	if characterIDStr == "" {
+		sendError(w, "ID du personnage requis", http.StatusBadRequest)
+		return
+	}
+
+	var character models.Character
+	if err := database.DB.First(&character, characterIDStr).Error; err != nil {
+		sendError(w, "Personnage non trouvé", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(character)
+}
