@@ -20,6 +20,9 @@ data class MessageUI(
 )
 
 data class ChatUiState(
+    val messages: List<MessageUI> = emptyList(),
+    val inputText: String = "",
+    val isKeyboardOpen: Boolean = false,
     val currentStats: TokenResponse? = null,
     val errorMessage: String? = null,
     val characterName: String = "Chat" // Default to generic "Chat"

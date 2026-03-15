@@ -3,6 +3,7 @@ package com.methil.aiko.data
 import com.methil.aiko.service.MessageService
 import com.methil.aiko.service.inmemory.InMemoryMessageService
 import com.methil.aiko.domain.Message
+import com.methil.aiko.domain.Character
 import com.methil.aiko.domain.TokenResponse
 import kotlinx.coroutines.flow.Flow
 
@@ -24,7 +25,7 @@ class MessageRepository(
         return messageService.fetchHistory(characterId, jwtToken)
     }
 
-    suspend fun fetchCharacter(characterId: Int, jwtToken: String): com.methil.aiko.domain.Character? {
+    suspend fun fetchCharacter(characterId: Int, jwtToken: String): Character? {
         return messageService.fetchCharacter(characterId, jwtToken)
     }
 }

@@ -4,6 +4,7 @@ import android.util.Base64
 import android.util.Log
 import com.methil.aiko.bridge.AikoConfig
 import com.methil.aiko.domain.Message
+import com.methil.aiko.domain.Character
 import com.methil.aiko.domain.TokenResponse
 import com.methil.aiko.service.MessageService
 import kotlinx.coroutines.channels.awaitClose
@@ -169,6 +170,8 @@ internal class InMemoryMessageService : MessageService {
                 eventSource.cancel()
             }
         }
+    }
+
     override suspend fun fetchHistory(characterId: Int, jwtToken: String): List<Message> {
         val url = "$baseUrl/messages?character_id=$characterId"
         val request = Request.Builder()
@@ -198,6 +201,8 @@ internal class InMemoryMessageService : MessageService {
             Log.e("AikoHistory", "Failed to fetch history: ${e.message}")
             emptyList()
         }
+    }
+
     override suspend fun fetchCharacter(characterId: Int, jwtToken: String): Character? {
         val url = "$baseUrl/character?id=$characterId"
         val request = Request.Builder()

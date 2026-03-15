@@ -11,6 +11,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.methil.aiko.ui.screens.auth.AuthScreen
 import com.methil.aiko.ui.screens.main.CharactersScreen
+import com.methil.aiko.ui.screens.main.MainScreen
+import com.methil.aiko.domain.Character
 import com.methil.aiko.ui.screens.chat.MessageScreen
 import com.methil.aiko.ui.screens.auth.OnboardingScreen
 import com.methil.aiko.ui.screens.auth.SplashScreen

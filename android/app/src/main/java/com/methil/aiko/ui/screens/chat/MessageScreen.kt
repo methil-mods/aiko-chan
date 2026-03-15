@@ -33,6 +33,7 @@ import androidx.compose.animation.core.*
 import coil.compose.AsyncImage
 import com.methil.aiko.R
 import com.methil.aiko.ui.components.AikoCustomKeyboard
+import com.methil.aiko.ui.components.AikoHeader
 import com.methil.aiko.ui.components.XpWindow
 import com.methil.aiko.ui.theme.*
 import androidx.lifecycle.viewmodel.compose.viewModel

@@ -24,6 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.methil.aiko.bridge.AikoConfig
+import com.methil.aiko.domain.UserProfile
+import com.methil.aiko.service.AuthService
 import com.methil.aiko.ui.components.*
 import com.methil.aiko.ui.theme.*
 import kotlinx.coroutines.launch
@@ -200,9 +203,8 @@ fun ProfileScreen(
                 }
             }
         }
-    }
 
-        // Error message overlay
+        // Error message overlay moved inside AikoBackground (which provides BoxScope)
         errorMessage?.let { error ->
             Snackbar(
                 action = {

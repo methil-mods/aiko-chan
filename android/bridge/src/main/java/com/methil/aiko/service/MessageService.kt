@@ -1,6 +1,7 @@
 package com.methil.aiko.service
 
 import com.methil.aiko.domain.Message
+import com.methil.aiko.domain.Character
 import com.methil.aiko.domain.TokenResponse
 import kotlinx.coroutines.flow.Flow
 

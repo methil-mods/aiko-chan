@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.methil.aiko.data.TokenManager
+import com.methil.aiko.ui.components.AikoDialogFactory
 import com.methil.aiko.ui.navigation.AikoNavigation
 import com.methil.aiko.ui.theme.AikoTheme
 import com.methil.aiko.ui.viewmodels.MainViewModel
@@ -96,7 +97,5 @@ class MainActivity : ComponentActivity() {
                 mainViewModel.unlockCharacter(tagId)
             }
         }
-    }
-
     }
 }
