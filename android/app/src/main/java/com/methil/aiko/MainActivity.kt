@@ -49,13 +49,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             val uiState by mainViewModel.uiState.collectAsState()
             
-            // Listen for unlock results to show popup
-            uiState.unlockResult?.let { result ->
-                showUnlockPopup(result.characterName)
-                mainViewModel.clearUnlockResult()
-            }
-
             AikoTheme {
+                // Compose-based UI Dialog
+                uiState.unlockResult?.let { result ->
+                    AikoDialogFactory.InfoDialog(
+                        title = "✨ NOUVEAU PERSONNAGE ✨",
+                        message = "Félicitations ! Tu as débloqué ${result.characterName}. Tu peux maintenant discuter avec elle dans la liste des personnages.",
+                        onDismiss = { mainViewModel.clearUnlockResult() }
+                    )
+                }
+
                 AikoNavigation(mainViewModel = mainViewModel)
             }
         }
@@ -95,12 +98,5 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun showUnlockPopup(characterName: String) {
-        AlertDialog.Builder(this)
-            .setTitle("✨ NOUVEAU PERSONNAGE DÉBLOQUÉ ✨")
-            .setMessage("Félicitations ! Tu as débloqué $characterName. Tu peux maintenant discuter avec elle dans la liste des personnages.")
-            .setPositiveButton("Génial !") { dialog, _ -> dialog.dismiss() }
-            .setCancelable(true)
-            .show()
     }
 }

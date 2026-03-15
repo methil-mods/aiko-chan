@@ -24,10 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.methil.aiko.R
-import com.methil.aiko.bridge.AikoConfig
-import com.methil.aiko.domain.UserProfile
-import com.methil.aiko.service.AuthService
+import com.methil.aiko.ui.components.*
 import com.methil.aiko.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -103,20 +100,7 @@ fun ProfileScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(LightViolet),
-        contentAlignment = Alignment.Center
-    ) {
-        // Pixel Background
-        Image(
-            painter = painterResource(id = R.drawable.chat_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
-        )
-
+    AikoBackground {
         if (isLoading && profile == null) {
             CircularProgressIndicator(color = DarkPurple)
         } else {
@@ -127,12 +111,9 @@ fun ProfileScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Profile Card with Square styling
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .border(3.dp, DarkPurple)
-                        .padding(24.dp)
+                AikoCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    borderColor = DarkPurple
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         // Avatar area
@@ -178,26 +159,21 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         if (isEditing) {
-                            ProfileTextField(label = "NAME", value = editName, onValueChange = { editName = it })
+                            AikoTextField(label = "NAME", value = editName, onValueChange = { editName = it })
                             Spacer(modifier = Modifier.height(16.dp))
-                            ProfileTextField(label = "AGE", value = editAge, onValueChange = { editAge = it })
+                            AikoTextField(label = "AGE", value = editAge, onValueChange = { editAge = it })
                             
                             Spacer(modifier = Modifier.height(24.dp))
                             
-                            SquareButton(text = "SAVE", onClick = { handleUpdate() })
+                            AikoButton(text = "SAVE", onClick = { handleUpdate() })
                             Spacer(modifier = Modifier.height(8.dp))
                             TextButton(onClick = { isEditing = false }) {
                                 Text("CANCEL", color = DarkPurple, fontWeight = FontWeight.Bold)
                             }
                         } else {
-                            Text(
+                            AikoHeader(
                                 text = profile?.username?.uppercase() ?: "",
-                                style = androidx.compose.ui.text.TextStyle(
-                                    color = DarkPurple,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                                )
+                                fontSize = 24.sp
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
@@ -209,33 +185,22 @@ fun ProfileScreen(
                             
                             Spacer(modifier = Modifier.height(24.dp))
                             
-                            SquareButton(text = "EDIT PROFILE", onClick = { isEditing = true })
+                            AikoButton(text = "EDIT PROFILE", onClick = { isEditing = true })
                             
                             Spacer(modifier = Modifier.height(12.dp))
                             
                             // Logout Button
-                            Button(
+                            AikoButton(
+                                text = "LOGOUT",
                                 onClick = onLogout,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                shape = RectangleShape,
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE91E63)), // Pinkish red
-                                border = BorderStroke(2.dp, Color.Black)
-                            ) {
-                                Text(
-                                    text = "LOGOUT",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp,
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                                )
-                            }
+                                containerColor = Color(0xFFE91E63)
+                            )
                         }
                     }
                 }
             }
         }
+    }
 
         // Error message overlay
         errorMessage?.let { error ->
@@ -255,58 +220,3 @@ fun ProfileScreen(
     }
 }
 
-@Composable
-fun ProfileTextField(label: String, value: String, onValueChange: (String) -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            color = DarkPurple,
-            fontWeight = FontWeight.Bold,
-            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-                .background(Color.Black)
-                .border(2.dp, DarkPurple)
-                .padding(horizontal = 8.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            androidx.compose.foundation.text.BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                textStyle = androidx.compose.ui.text.TextStyle(
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                ),
-                cursorBrush = androidx.compose.ui.graphics.SolidColor(Color.White),
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
-fun SquareButton(text: String, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        shape = RectangleShape,
-        colors = ButtonDefaults.buttonColors(containerColor = DarkPurple),
-        border = BorderStroke(2.dp, Color.Black)
-    ) {
-        Text(
-            text = text,
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
-            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-        )
-    }
-}

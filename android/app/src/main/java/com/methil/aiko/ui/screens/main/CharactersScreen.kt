@@ -11,10 +11,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.methil.aiko.bridge.AikoConfig
 import com.methil.aiko.domain.Character
+import com.methil.aiko.ui.components.*
+import com.methil.aiko.ui.theme.DarkPurple
+import com.methil.aiko.ui.theme.LightViolet
+import com.methil.aiko.ui.theme.LightestPink
 import com.methil.aiko.ui.viewmodels.MainViewModel
 import coil.compose.AsyncImage
 import androidx.compose.foundation.clickable
@@ -48,20 +50,7 @@ fun CharactersScreen(
         mainViewModel.loadCharacters()
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(LightViolet),
-        contentAlignment = Alignment.Center
-    ) {
-        // Pixel Background
-        Image(
-            painter = painterResource(id = R.drawable.chat_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
-        )
-
+    AikoBackground {
         if (isLoading) {
             CircularProgressIndicator(color = DarkPurple)
         } else if (errorMessage != null) {
@@ -83,29 +72,17 @@ fun CharactersScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    Text(
-                        text = "CHARACTERS",
-                        style = androidx.compose.ui.text.TextStyle(
-                            color = Color.White,
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontFamily = FontFamily.Monospace
-                        ),
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
+                    AikoHeader(text = "CHARACTERS")
                 }
                 
                 items(characters) { character ->
-                    // Square Character Card
-                    Box(
+                    AikoCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color.White)
-                            .border(3.dp, DarkPurple, RectangleShape)
-                            .clickable { onCharacterSelect(character) }
+                            .clickable { onCharacterSelect(character) },
+                        borderColor = DarkPurple
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             if (character.image_url != null) {
