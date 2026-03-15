@@ -152,7 +152,7 @@ fun MessageScreen(
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Aiko Chat", // Hardcoded for now, could be dynamic
+                            text = "${uiState.characterName} Chat",
                             color = Color.White,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
