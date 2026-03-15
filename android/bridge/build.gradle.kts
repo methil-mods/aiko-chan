@@ -29,15 +29,21 @@ android {
         consumerProguardFiles("consumer-rules.pro")
 
         // Removed AIKO_API_KEY as it's no longer used (handled by Go backend)
+        
+        buildConfigField("String", "DEFAULT_MODEL", "\"aiko\"")
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"http://192.168.1.145:8080\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "BASE_URL", "\"https://api.aiko.ethan-folio.fr\"")
         }
     }
     compileOptions {
