@@ -6,9 +6,9 @@ import com.methil.aiko.domain.Message
 import com.methil.aiko.domain.TokenResponse
 import kotlinx.coroutines.flow.Flow
 
-class MessageRepository {
-
-    private val messageService: MessageService = InMemoryMessageService()
+class MessageRepository(
+    private val messageService: MessageService
+) {
 
     fun getMessages(): List<Message> = messageService.getMessages()
 

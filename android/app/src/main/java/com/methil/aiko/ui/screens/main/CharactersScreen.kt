@@ -13,10 +13,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import android.util.Log
 import com.methil.aiko.bridge.AikoConfig
-import com.methil.aiko.service.AuthService
 import com.methil.aiko.domain.Character
+import com.methil.aiko.ui.viewmodels.MainViewModel
 import coil.compose.AsyncImage
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
@@ -37,23 +36,16 @@ import com.methil.aiko.ui.theme.LightestPink
 @Composable
 fun CharactersScreen(
     sessionToken: String,
+    mainViewModel: MainViewModel,
     onCharacterSelect: (Character) -> Unit = {}
 ) {
-    var characters by remember { mutableStateOf<List<Character>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    
-    val authService = remember { AuthService(AikoConfig.BASE_URL) }
+    val uiState by mainViewModel.uiState.collectAsState()
+    val characters = uiState.characters
+    val isLoading = uiState.isLoading
+    val errorMessage = uiState.errorMessage
 
     LaunchedEffect(sessionToken) {
-        authService.getCharacters(sessionToken).onSuccess {
-            characters = it
-            isLoading = false
-        }.onFailure {
-            Log.e("CharactersScreen", "Failed to fetch characters", it)
-            errorMessage = it.message
-            isLoading = false
-        }
+        mainViewModel.loadCharacters()
     }
 
     Box(

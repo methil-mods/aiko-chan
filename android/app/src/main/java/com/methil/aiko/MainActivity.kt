@@ -18,11 +18,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.lifecycleScope
-import com.methil.aiko.bridge.AikoConfig
 import com.methil.aiko.data.TokenManager
 import com.methil.aiko.ui.navigation.AikoNavigation
 import com.methil.aiko.ui.theme.AikoTheme
+import com.methil.aiko.ui.viewmodels.MainViewModel
+import com.methil.aiko.ui.viewmodels.ProjectViewModelFactory
+import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,6 +37,7 @@ import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
     private var nfcAdapter: NfcAdapter? = null
+    private val mainViewModel: MainViewModel by viewModels { ProjectViewModelFactory(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -43,8 +47,16 @@ class MainActivity : ComponentActivity() {
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         
         setContent {
+            val uiState by mainViewModel.uiState.collectAsState()
+            
+            // Listen for unlock results to show popup
+            uiState.unlockResult?.let { result ->
+                showUnlockPopup(result.characterName)
+                mainViewModel.clearUnlockResult()
+            }
+
             AikoTheme {
-                AikoNavigation()
+                AikoNavigation(mainViewModel = mainViewModel)
             }
         }
         handleIntent(intent)
@@ -78,56 +90,7 @@ class MainActivity : ComponentActivity() {
             tag?.let {
                 val tagId = it.id.joinToString("") { byte -> "%02X".format(byte) }
                 Log.d("NFC_SCANNER", "NFC Tag Scanned: $tagId")
-                unlockCharacter(tagId)
-            }
-        }
-    }
-
-    private fun unlockCharacter(tagId: String) {
-        val token = TokenManager(this).getToken()
-        if (token == null) {
-            Log.d("NFC_SCANNER", "User not logged in, skipping unlock")
-            return
-        }
-        
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val client = OkHttpClient()
-                val jsonBody = """{"nfc_tag": "$tagId"}"""
-                val body = RequestBody.create("application/json".toMediaType(), jsonBody)
-                
-                val request = Request.Builder()
-                    .url("${AikoConfig.BASE_URL}/characters/unlock")
-                    .post(body)
-                    .header("Authorization", "Bearer $token")
-                    .build()
-                
-                val response = client.newCall(request).execute()
-                val responseBody = response.body?.string()
-                
-                withContext(Dispatchers.Main) {
-                    if (response.isSuccessful && responseBody != null) {
-                        try {
-                            val json = JSONObject(responseBody)
-                            val isNew = json.optBoolean("is_new", false)
-                            val characterName = json.optString("character_name", "???")
-                            
-                            if (isNew) {
-                                showUnlockPopup(characterName)
-                            } else {
-                                Toast.makeText(this@MainActivity, "Personnage déjà débloqué : $characterName", Toast.LENGTH_SHORT).show()
-                            }
-                        } catch (e: Exception) {
-                            Log.e("NFC_SCANNER", "Failed to parse unlock response", e)
-                        }
-                        Log.d("NFC_SCANNER", "Character unlock request successful: $responseBody")
-                    } else if (response.code != 404) { // Ignore 404 (tag unknown)
-                        Log.e("NFC_SCANNER", "Failed to unlock character: ${response.code} $responseBody")
-                        Toast.makeText(this@MainActivity, "Erreur de déverrouillage", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("NFC_SCANNER", "Error unlocking character", e)
+                mainViewModel.unlockCharacter(tagId)
             }
         }
     }

@@ -25,9 +25,9 @@ data class ChatUiState(
     val characterName: String = "Chat" // Default to generic "Chat"
 )
 
-class MessageViewModel : ViewModel() {
-    
-    private val repository = MessageRepository()
+class MessageViewModel(
+    private val repository: MessageRepository
+) : ViewModel() {
     
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()

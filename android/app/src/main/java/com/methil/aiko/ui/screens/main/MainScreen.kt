@@ -24,6 +24,7 @@ import com.methil.aiko.ui.theme.LightestPink
 @Composable
 fun MainScreen(
     sessionToken: String,
+    mainViewModel: com.methil.aiko.ui.viewmodels.MainViewModel,
     onCharacterSelect: (com.methil.aiko.domain.Character) -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
@@ -90,6 +91,7 @@ fun MainScreen(
             composable(AikoScreen.Characters.route) {
                 CharactersScreen(
                     sessionToken = sessionToken,
+                    mainViewModel = mainViewModel,
                     onCharacterSelect = onCharacterSelect
                 )
             }
